@@ -8,7 +8,7 @@ const CAMPO =
   'w-full rounded-xl border border-linea bg-white px-3 py-2.5 focus-visible:outline-2 focus-visible:outline-mocha'
 
 const ESTADOS = {
-  abierta: { etiqueta: 'Abierta', tono: 'bg-amber-50 text-amber-800' },
+  pendiente: { etiqueta: 'En curso', tono: 'bg-latte/40 text-mocha' },
   cobrada: { etiqueta: 'Cobrada', tono: 'bg-emerald-50 text-emerald-800' },
 }
 

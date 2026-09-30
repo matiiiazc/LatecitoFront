@@ -18,7 +18,7 @@ function urlComandasDeHoy() {
   return `/comandas?desde=${hoy.toISOString()}&hasta=${manana.toISOString()}&limite=100`
 }
 
-export default function Home({ onNavigate = () => {} }) {
+export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} }) {
   const [comandas, setComandas] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -62,12 +62,17 @@ export default function Home({ onNavigate = () => {} }) {
     }
   }, [])
 
-  const { ventas, anuladas, vendido, ticket } = useMemo(() => {
-    const buenas = comandas.filter((c) => c.estado !== 'anulada')
+  // Solo lo cobrado cuenta como venta: las que quedaron en curso todavía no
+  // entró la plata. Las anuladas se informan aparte.
+  const { ventas, anuladas, enCurso, vendido, ticket } = useMemo(() => {
+    const buenas = comandas.filter((c) => c.estado === 'cobrada')
+    const anuladas = comandas.filter((c) => c.estado === 'anulada')
+    const enCurso = comandas.filter((c) => c.estado === 'pendiente')
     const suma = buenas.reduce((s, c) => s + c.total, 0)
     return {
       ventas: buenas,
-      anuladas: comandas.length - buenas.length,
+      anuladas: anuladas.length,
+      enCurso: enCurso.length,
       vendido: suma,
       ticket: buenas.length ? Math.round(suma / buenas.length) : 0,
     }
@@ -166,6 +171,22 @@ export default function Home({ onNavigate = () => {} }) {
         {error && (
           <p role="alert" className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-red-800">
             {error}
+          </p>
+        )}
+
+        {enCurso > 0 && (
+          <p className="mb-6 flex flex-wrap items-center gap-3 rounded-xl bg-latte/40 px-4 py-3 text-mocha">
+            <span>
+              Hay <strong>{enCurso}</strong> comanda{enCurso > 1 ? 's' : ''} en curso, sin
+              cobrar.
+            </span>
+            <button
+              type="button"
+              onClick={onVerEnCurso}
+              className="rounded-lg bg-espresso px-3 py-1.5 text-sm font-semibold text-latte hover:bg-mocha"
+            >
+              Verlas
+            </button>
           </p>
         )}
 

@@ -6,7 +6,8 @@ import CambiarPassword from './pages/CambiarPassword'
 import NuevaComanda from './pages/NuevaComanda'
 import Stock from './pages/Stock'
 import Productos from './pages/Productos'
-import Mesas from './pages/Mesas'
+import Resumenes from './pages/Resumenes'
+import Ganancias from './pages/Ganancias'
 import { useAuth } from './useAuth'
 
 export default function App() {
@@ -16,6 +17,9 @@ export default function App() {
   const logout = useAuth((s) => s.logout)
 
   const [vista, setVista] = useState('inicio')
+  // Sub-pestaña de NuevaComanda ("nueva" o "comandas"), para poder llegar
+  // desde el inicio a las comandas en curso
+  const [tabComanda, setTabComanda] = useState('nueva')
 
   // Al abrir la app, si hay un token en sessionStorage se confirma contra la API
   useEffect(() => {
@@ -49,13 +53,24 @@ export default function App() {
 
       {/* pb deja aire para la barra inferior del celular; en md+ la barra se oculta */}
       <div className="min-w-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-0">
-        {vista === 'inicio' && <Home onNavigate={setVista} />}
-        {vista === 'nueva' && <NuevaComanda />}
+        {vista === 'inicio' && (
+          <Home
+            onNavigate={setVista}
+            onVerEnCurso={() => {
+              setTabComanda('comandas')
+              setVista('nueva')
+            }}
+          />
+        )}
+        {vista === 'nueva' && <NuevaComanda tab={tabComanda} onTab={setTabComanda} />}
         {vista === 'stock' && <Stock />}
         {vista === 'productos' && <Productos />}
-        {vista === 'mesas' && <Mesas />}
+        {vista === 'resumenes' && <Resumenes />}
+        {vista === 'ganancias' && <Ganancias />}
         {vista === 'password' && <CambiarPassword />}
-        {!['inicio', 'nueva', 'stock', 'productos', 'mesas', 'password'].includes(vista) && (
+        {!['inicio', 'nueva', 'stock', 'productos', 'resumenes', 'ganancias', 'password'].includes(
+          vista
+        ) && (
           <p className="p-8 text-lg text-piedra">Pantalla en construcción: {vista}</p>
         )}
       </div>

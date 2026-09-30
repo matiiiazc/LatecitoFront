@@ -5,6 +5,7 @@ const ICONOS = {
   nueva: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 8v8M8 12h8'],
   stock: ['M21 8l-9-5-9 5v8l9 5 9-5z', 'M3 8l9 5 9-5', 'M12 13v8'],
   resumenes: ['M3 21h18', 'M6 21V11', 'M12 21V4', 'M18 21v-7'],
+  ganancias: ['M3 3v18h18', 'M7 15l4-5 3 3 5-7'],
   productos: ['M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z', 'M3.27 6.96L12 12.01l8.73-5.05', 'M12 22.08V12'],
   mesas: ['M5 5h6v6H5z', 'M13 5h6v6h-6z', 'M5 13h6v6H5z', 'M13 13h6v6h-6z'],
   cuenta: ['M16 3l4 4-4 4', 'M20 7H9a5 5 0 0 0-5 5', 'M8 21l-4-4 4-4', 'M4 17h11a5 5 0 0 0 5-5'],
@@ -37,9 +38,9 @@ const NAV = [
   { id: 'inicio', etiqueta: 'Inicio' },
   { id: 'nueva', etiqueta: 'Nueva comanda' },
   { id: 'stock', etiqueta: 'Stock' },
-  { id: 'resumenes', etiqueta: 'Resúmenes', soloAdmin: true },
+  { id: 'resumenes', etiqueta: 'Actividad', soloAdmin: true },
+  { id: 'ganancias', etiqueta: 'Ganancias', soloAdmin: true },
   { id: 'productos', etiqueta: 'Productos', soloAdmin: true },
-  { id: 'mesas', etiqueta: 'Mesas', soloAdmin: true },
 ]
 
 // Etiquetas cortas para la barra inferior del celular
@@ -47,9 +48,9 @@ const ETIQUETA_CORTA = {
   inicio: 'Inicio',
   nueva: 'Nueva',
   stock: 'Stock',
-  resumenes: 'Resúmenes',
+  resumenes: 'Actividad',
+  ganancias: 'Ganancias',
   productos: 'Productos',
-  mesas: 'Mesas',
 }
 
 export default function Sidebar({
