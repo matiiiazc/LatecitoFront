@@ -25,6 +25,8 @@ export default function NuevaComanda() {
   const [enviando, setEnviando] = useState(false)
   const [errorCobro, setErrorCobro] = useState('')
   const [hecha, setHecha] = useState(null)
+  const [imprimiendoJob, setImprimiendoJob] = useState(false)
+  const [avisoPrint, setAvisoPrint] = useState(null)
 
   useEffect(() => {
     let vivo = true
@@ -116,6 +118,25 @@ export default function NuevaComanda() {
     setTipo('mostrador')
     setBusqueda('')
     setCategoria(0)
+    setAvisoPrint(null)
+  }
+
+  // Crea un print job en el backend. La web NO accede a la impresora:
+  // el agente local (USB) es quien después baja el job e imprime.
+  async function imprimirComanda() {
+    setImprimiendoJob(true)
+    setAvisoPrint(null)
+    try {
+      const job = await api('/print-jobs', {
+        metodo: 'POST',
+        cuerpo: { comanda_id: hecha.id },
+      })
+      setAvisoPrint({ tono: 'ok', texto: `Comanda enviada a imprimir (job #${job.id}).` })
+    } catch (e) {
+      setAvisoPrint({ tono: 'error', texto: e.message })
+    } finally {
+      setImprimiendoJob(false)
+    }
   }
 
   async function cobrar(metodo) {
@@ -198,13 +219,36 @@ export default function NuevaComanda() {
             </p>
           ))}
 
-          <button
-            type="button"
-            onClick={limpiar}
-            className="mt-6 w-full rounded-xl bg-espresso px-4 py-3 text-lg font-semibold text-latte transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
-          >
-            Cargar otra comanda
-          </button>
+          {avisoPrint && (
+            <p
+              role="status"
+              className={`mt-4 rounded-xl px-4 py-3 ${
+                avisoPrint.tono === 'ok'
+                  ? 'bg-emerald-50 text-emerald-800'
+                  : 'bg-red-50 text-red-800'
+              }`}
+            >
+              {avisoPrint.texto}
+            </p>
+          )}
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={imprimirComanda}
+              disabled={imprimiendoJob}
+              className="flex-1 rounded-xl bg-espresso px-4 py-3 text-lg font-semibold text-latte transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha disabled:opacity-60"
+            >
+              {imprimiendoJob ? 'Enviando...' : 'Imprimir comanda'}
+            </button>
+            <button
+              type="button"
+              onClick={limpiar}
+              className="flex-1 rounded-xl bg-latte/40 px-4 py-3 text-lg font-semibold text-mocha transition-colors hover:bg-latte/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+            >
+              Cargar otra comanda
+            </button>
+          </div>
         </div>
       </div>
     )
