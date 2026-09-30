@@ -161,7 +161,7 @@ export default function Productos() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 md:p-10">
+    <div className="mx-auto max-w-6xl p-4 sm:p-6 md:p-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-mocha">Productos</h1>
@@ -176,7 +176,7 @@ export default function Productos() {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar..."
-            className="rounded-xl border border-linea bg-white px-4 py-2.5 focus-visible:outline-2 focus-visible:outline-mocha"
+            className="w-full rounded-xl border border-linea bg-white px-4 py-2.5 focus-visible:outline-2 focus-visible:outline-mocha sm:w-60"
           />
           <button
             type="button"
@@ -212,7 +212,62 @@ export default function Productos() {
       {cargando ? (
         <p className="mt-6 text-piedra">Cargando...</p>
       ) : (
-        <div className="mt-5 overflow-x-auto rounded-2xl border border-linea bg-white">
+        <>
+          {/* Tarjetas: celulares */}
+          <div className="mt-5 md:hidden">
+            {visibles.length === 0 && (
+              <p className="rounded-2xl border border-linea bg-white p-6 text-center text-piedra">
+                No hay productos que coincidan.
+              </p>
+            )}
+            <ul className="space-y-3">
+              {visibles.map((p) => (
+                <li
+                  key={p.id}
+                  className={`rounded-2xl border border-linea bg-white p-4 ${
+                    p.activo ? '' : 'text-piedra'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-tinta">{p.nombre}</p>
+                      {p.opciones.length > 0 && (
+                        <p className="mt-0.5 truncate text-sm text-piedra">
+                          {p.opciones.map((o) => o.nombre).join(', ')}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-sm text-piedra">{p.categoria}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-sm ${
+                        p.activo ? 'bg-emerald-50 text-emerald-800' : 'bg-linea/40 text-piedra'
+                      }`}
+                    >
+                      {p.activo ? 'activo' : 'inactivo'}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <p className="text-xl font-bold tabular-nums text-mocha">{dinero(p.precio)}</p>
+                    <div className="flex items-center gap-4">
+                      {p.controla_stock && (
+                        <p className="text-sm text-piedra tabular-nums">Stock: {p.stock_actual}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => editar(p)}
+                        className="text-sm font-semibold text-mocha underline hover:text-espresso"
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tabla: escritorio / tablets */}
+          <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-linea bg-white md:block">
           <table className="w-full text-left">
             <thead className="border-b border-linea text-sm text-piedra">
               <tr>
@@ -270,6 +325,7 @@ export default function Productos() {
             <p className="p-6 text-center text-piedra">No hay productos que coincidan.</p>
           )}
         </div>
+        </>
       )}
 
       {/* Alta / edición */}

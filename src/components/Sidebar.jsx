@@ -42,6 +42,16 @@ const NAV = [
   { id: 'mesas', etiqueta: 'Mesas', soloAdmin: true },
 ]
 
+// Etiquetas cortas para la barra inferior del celular
+const ETIQUETA_CORTA = {
+  inicio: 'Inicio',
+  nueva: 'Nueva',
+  stock: 'Stock',
+  resumenes: 'Resúmenes',
+  productos: 'Productos',
+  mesas: 'Mesas',
+}
+
 export default function Sidebar({
   activo = 'inicio',
   onNavigate = () => {},
@@ -51,6 +61,7 @@ export default function Sidebar({
 }) {
   // En pantallas chicas arranca plegada
   const [abierto, setAbierto] = useState(() => window.innerWidth >= 768)
+  const [sesion, setSesion] = useState(false)
 
   const items = NAV.filter((i) => !i.soloAdmin || rol === 'admin')
 
@@ -59,82 +70,185 @@ export default function Sidebar({
   const centrado = abierto ? '' : 'justify-center'
 
   return (
-    <aside
-      className={`flex h-screen shrink-0 flex-col bg-espresso text-latte transition-[width] duration-200 motion-reduce:transition-none ${
-        abierto ? 'w-64' : 'w-[76px]'
-      }`}
-    >
-      {/* Cabecera */}
-      <div className={`flex items-center px-3 py-5 ${abierto ? 'justify-between' : 'justify-center'}`}>
-        {abierto && (
-          <span className="pl-2 text-2xl font-extrabold tracking-tight">Lattecito</span>
-        )}
-        <button
-          type="button"
-          onClick={() => setAbierto(!abierto)}
-          aria-expanded={abierto}
-          aria-label={abierto ? 'Plegar menú' : 'Desplegar menú'}
-          title={abierto ? 'Plegar menú' : 'Desplegar menú'}
-          className="rounded-xl p-2 text-latte transition-colors hover:bg-mocha/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-latte"
-        >
-          <Icono
-            nombre="plegar"
-            className={`transition-transform motion-reduce:transition-none ${abierto ? '' : 'rotate-180'}`}
-          />
-        </button>
-      </div>
+    <>
+      {/* Menú lateral: escritorio y tablets grandes */}
+      <aside
+        className={`hidden h-dvh shrink-0 flex-col bg-espresso text-latte transition-[width] duration-200 motion-reduce:transition-none md:flex ${
+          abierto ? 'w-64' : 'w-[76px]'
+        }`}
+      >
+        {/* Cabecera */}
+        <div className={`flex items-center px-3 py-5 ${abierto ? 'justify-between' : 'justify-center'}`}>
+          {abierto && (
+            <span className="pl-2 text-2xl font-extrabold tracking-tight">Lattecito</span>
+          )}
+          <button
+            type="button"
+            onClick={() => setAbierto(!abierto)}
+            aria-expanded={abierto}
+            aria-label={abierto ? 'Plegar menú' : 'Desplegar menú'}
+            title={abierto ? 'Plegar menú' : 'Desplegar menú'}
+            className="rounded-xl p-2 text-latte transition-colors hover:bg-mocha/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-latte"
+          >
+            <Icono
+              nombre="plegar"
+              className={`transition-transform motion-reduce:transition-none ${abierto ? '' : 'rotate-180'}`}
+            />
+          </button>
+        </div>
 
-      {/* Navegación */}
-      <nav aria-label="Principal" className="flex flex-1 flex-col gap-1 px-3">
-        {items.map((item) => {
-          const esActivo = activo === item.id
-          return (
+        {/* Navegación */}
+        <nav aria-label="Principal" className="flex flex-1 flex-col gap-1 px-3">
+          {items.map((item) => {
+            const esActivo = activo === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onNavigate(item.id)}
+                aria-current={esActivo ? 'page' : undefined}
+                aria-label={abierto ? undefined : item.etiqueta}
+                title={abierto ? undefined : item.etiqueta}
+                className={`${base} ${centrado} ${
+                  esActivo ? 'bg-latte font-semibold text-espresso' : 'hover:bg-mocha/40'
+                }`}
+              >
+                <Icono nombre={item.id} />
+                {abierto && <span>{item.etiqueta}</span>}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Cuenta */}
+        <div className="flex flex-col gap-1.5 border-t border-mocha px-3 py-4">
+          {abierto && (
+            <p className="mb-1.5 px-3 text-sm text-latte/70">
+              Sesión de <span className="font-semibold text-latte">{cuenta.nombre}</span>
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => onNavigate('password')}
+            aria-label={abierto ? undefined : 'Cambiar contraseña'}
+            title={abierto ? undefined : 'Cambiar contraseña'}
+            className={`${base} ${centrado} py-2 text-sm opacity-80 hover:bg-mocha/40 hover:opacity-100`}
+          >
+            <Icono nombre="password" className="[&>path]:stroke-[1.6]" />
+            {abierto && <span>Cambiar contraseña</span>}
+          </button>
+          <button
+            type="button"
+            onClick={onCambiarCuenta}
+            aria-label={abierto ? undefined : 'Cambiar de cuenta'}
+            title={abierto ? undefined : 'Cambiar de cuenta'}
+            className={`${base} ${centrado} border border-mocha hover:bg-mocha/40`}
+          >
+            <Icono nombre="cuenta" />
+            {abierto && <span>Cambiar de cuenta</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Barra inferior: celulares */}
+      <nav
+        aria-label="Principal"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-mocha bg-espresso pb-[env(safe-area-inset-bottom)] text-latte md:hidden"
+      >
+        <ul className="grid auto-cols-fr grid-flow-col items-stretch">
+          {items.map((item) => {
+            const esActivo = activo === item.id
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onNavigate(item.id)}
+                  aria-current={esActivo ? 'page' : undefined}
+                  className={`flex w-full flex-col items-center gap-0.5 px-1 py-2.5 transition-colors ${
+                    esActivo ? 'bg-latte text-espresso' : 'hover:bg-mocha/40'
+                  }`}
+                >
+                  <Icono nombre={item.id} />
+                  <span
+                    className={`max-w-full truncate text-[11px] leading-none ${
+                      esActivo ? 'font-semibold' : 'text-latte/80'
+                    }`}
+                  >
+                    {ETIQUETA_CORTA[item.id] ?? item.etiqueta}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+
+          <li className="border-l border-mocha">
             <button
-              key={item.id}
               type="button"
-              onClick={() => onNavigate(item.id)}
-              aria-current={esActivo ? 'page' : undefined}
-              aria-label={abierto ? undefined : item.etiqueta}
-              title={abierto ? undefined : item.etiqueta}
-              className={`${base} ${centrado} ${
-                esActivo ? 'bg-latte font-semibold text-espresso' : 'hover:bg-mocha/40'
-              }`}
+              onClick={() => setSesion(true)}
+              aria-haspopup="dialog"
+              className="flex w-full flex-col items-center gap-0.5 px-1 py-2.5 transition-colors hover:bg-mocha/40"
             >
-              <Icono nombre={item.id} />
-              {abierto && <span>{item.etiqueta}</span>}
+              <Icono nombre="cuenta" />
+              <span className="max-w-full truncate text-[11px] leading-none text-latte/80">
+                Cuenta
+              </span>
             </button>
-          )
-        })}
+          </li>
+        </ul>
       </nav>
 
-      {/* Cuenta */}
-      <div className="flex flex-col gap-1.5 border-t border-mocha px-3 py-4">
-        {abierto && (
-          <p className="mb-1.5 px-3 text-sm text-latte/70">
-            Sesión de <span className="font-semibold text-latte">{cuenta.nombre}</span>
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => onNavigate('password')}
-          aria-label={abierto ? undefined : 'Cambiar contraseña'}
-          title={abierto ? undefined : 'Cambiar contraseña'}
-          className={`${base} ${centrado} py-2 text-sm opacity-80 hover:bg-mocha/40 hover:opacity-100`}
+      {/* Hoja de sesión en el celular */}
+      {sesion && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-espresso/60 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:hidden sm:items-center"
+          onClick={() => setSesion(false)}
         >
-          <Icono nombre="password" className="[&>path]:stroke-[1.6]" />
-          {abierto && <span>Cambiar contraseña</span>}
-        </button>
-        <button
-          type="button"
-          onClick={onCambiarCuenta}
-          aria-label={abierto ? undefined : 'Cambiar de cuenta'}
-          title={abierto ? undefined : 'Cambiar de cuenta'}
-          className={`${base} ${centrado} border border-mocha hover:bg-mocha/40`}
-        >
-          <Icono nombre="cuenta" />
-          {abierto && <span>Cambiar de cuenta</span>}
-        </button>
-      </div>
-    </aside>
+          <div
+            role="dialog"
+            aria-label="Cuenta de sesión"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl bg-hueso p-6 text-tinta"
+          >
+            <p className="text-sm text-piedra">
+              Sesión de{' '}
+              <span className="font-semibold text-mocha">{cuenta.nombre}</span>
+            </p>
+
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSesion(false)
+                  onNavigate('password')
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-mocha transition-colors hover:bg-latte/40"
+              >
+                <Icono nombre="password" />
+                Cambiar contraseña
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSesion(false)
+                  onCambiarCuenta()
+                }}
+                className="flex w-full items-center gap-3 rounded-xl bg-espresso px-4 py-3 font-semibold text-latte transition-colors hover:bg-mocha"
+              >
+                <Icono nombre="cuenta" />
+                Cambiar de cuenta
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSesion(false)}
+              className="mt-2 w-full rounded-xl px-4 py-3 font-semibold text-piedra transition-colors hover:bg-latte/40"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

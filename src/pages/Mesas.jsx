@@ -111,7 +111,7 @@ export default function Mesas() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 md:p-10">
+    <div className="mx-auto max-w-6xl p-4 sm:p-6 md:p-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-mocha">Mesas</h1>
@@ -149,7 +149,73 @@ export default function Mesas() {
       {cargando ? (
         <p className="mt-6 text-piedra">Cargando...</p>
       ) : (
-        <div className="mt-5 overflow-x-auto rounded-2xl border border-linea bg-white">
+        <>
+          {/* Tarjetas: celulares */}
+          <div className="mt-5 md:hidden">
+            {mesas.length === 0 && (
+              <p className="rounded-2xl border border-linea bg-white p-6 text-center text-piedra">
+                No hay mesas.
+              </p>
+            )}
+            <ul className="space-y-3">
+              {mesas.map((m) => {
+                const estado = ESTADOS[m.estado]
+                return (
+                  <li key={m.id} className="rounded-2xl border border-linea bg-white p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-semibold text-mocha">
+                        Mesa {m.numero}
+                        {!m.activa && (
+                          <span className="ml-2 rounded-full bg-piedra/10 px-2 py-0.5 text-xs text-piedra">
+                            Inactiva
+                          </span>
+                        )}
+                      </p>
+                      {m.comanda_id ? (
+                        estado ? (
+                          <span className={`rounded-full px-2 py-0.5 text-xs ${estado.tono}`}>
+                            {estado.etiqueta}
+                          </span>
+                        ) : (
+                          <span className="text-piedra">Con movimiento</span>
+                        )
+                      ) : (
+                        <span className="text-piedra">Libre</span>
+                      )}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <p className="text-sm text-piedra">Total</p>
+                      <p className="text-xl font-bold tabular-nums text-tinta">
+                        {m.total != null ? dinero(m.total) : '—'}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex gap-4 text-sm">
+                      <button
+                        type="button"
+                        onClick={() => editar(m)}
+                        className="font-semibold text-mocha underline hover:text-espresso"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAviso(null)
+                          setEliminando(m)
+                        }}
+                        className="font-semibold text-red-700 underline hover:text-red-900"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+
+          {/* Tabla: escritorio / tablets */}
+          <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-linea bg-white md:block">
           <table className="w-full text-left">
             <thead className="border-b border-linea text-sm text-piedra">
               <tr>
@@ -216,6 +282,7 @@ export default function Mesas() {
           </table>
           {mesas.length === 0 && <p className="p-6 text-center text-piedra">No hay mesas.</p>}
         </div>
+        </>
       )}
 
       {/* Alta / edición */}

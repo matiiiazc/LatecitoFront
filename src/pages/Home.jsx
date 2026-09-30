@@ -114,11 +114,13 @@ export default function Home({ onNavigate = () => {} }) {
   return (
     <div className="min-h-screen bg-hueso text-tinta">
       <header className="bg-espresso text-latte">
-        <div className="mx-auto max-w-6xl px-6 pt-10">
+        <div className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">Lattecito</h1>
-              <p className="mt-1 pb-2 capitalize text-latte/70">{fecha}</p>
+              <p className="mt-1 pb-2 text-latte/70">
+                Café al paso · <span className="capitalize">{fecha}</span>
+              </p>
             </div>
             <button
               type="button"
@@ -136,9 +138,12 @@ export default function Home({ onNavigate = () => {} }) {
             ['Ticket promedio', dinero(ticket)],
             ['Comandas del día', ventas.length],
           ].map(([etiqueta, valor], i) => (
-            <div key={etiqueta} className={`px-6 py-5 ${i > 0 ? 'border-l border-mocha' : ''}`}>
-              <dt className="text-sm text-latte/70">{etiqueta}</dt>
-              <dd className="mt-1 text-2xl font-bold tabular-nums text-white md:text-3xl">
+            <div
+              key={etiqueta}
+              className={`px-3 py-4 sm:px-6 sm:py-5 ${i > 0 ? 'border-l border-mocha' : ''}`}
+            >
+              <dt className="text-xs text-latte/70 sm:text-sm">{etiqueta}</dt>
+              <dd className="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl md:text-3xl">
                 {valor}
               </dd>
             </div>
@@ -146,7 +151,7 @@ export default function Home({ onNavigate = () => {} }) {
         </dl>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-10">
         {aviso && (
           <p
             role="status"

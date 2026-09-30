@@ -31,8 +31,8 @@ export default function Login() {
   return (
     <div className="grid min-h-screen bg-hueso md:grid-cols-2">
       <div className="flex min-h-48 flex-col justify-end bg-espresso p-8 text-latte md:p-14">
-        <h1 className="text-6xl font-extrabold tracking-tight md:text-8xl">Lattecito</h1>
-        <p className="mt-3 text-latte/70">Sistema de comandas</p>
+        <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl md:text-8xl">Lattecito</h1>
+        <p className="mt-3 text-latte/70">Café al paso</p>
       </div>
 
       <div className="flex items-center justify-center p-8">

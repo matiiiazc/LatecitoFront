@@ -255,7 +255,7 @@ export default function NuevaComanda() {
   }
 
   return (
-    <div className="flex h-full flex-col lg:flex-row">
+    <div className="flex flex-col lg:h-full lg:flex-row">
       {/* Elegir productos */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="border-b border-linea bg-white px-4 py-4">

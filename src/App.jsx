@@ -38,7 +38,7 @@ export default function App() {
   if (debeCambiarPassword) return <CambiarPassword obligatorio />
 
   return (
-    <div className="flex h-screen bg-hueso">
+    <div className="flex h-dvh bg-hueso">
       <Sidebar
         activo={vista}
         onNavigate={setVista}
@@ -47,7 +47,8 @@ export default function App() {
         rol={usuario.rol}
       />
 
-      <div className="flex-1 overflow-y-auto">
+      {/* pb deja aire para la barra inferior del celular; en md+ la barra se oculta */}
+      <div className="min-w-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-0">
         {vista === 'inicio' && <Home onNavigate={setVista} />}
         {vista === 'nueva' && <NuevaComanda />}
         {vista === 'stock' && <Stock />}
