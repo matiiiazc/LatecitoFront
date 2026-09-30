@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+*.tsbuildinfo
+logs
+*.log
+*.local
+
+# Secrets: nunca commitear archivos .env reales
+.env
+.env.*
+!.env.example
+
+# Editor / SO
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+
+  /* Marrones */
+  --color-espresso: #2b1d16;
+  --color-mocha: #5c4033;
+  --color-caramelo: #a9825c;
+  --color-latte: #d8bfa0;
+
+  /* Neutros */
+  --color-hueso: #f2efeb;
+  --color-tinta: #231e1a;
+  --color-piedra: #6b635c;
+  --color-linea: #dcd6cf;
+}
