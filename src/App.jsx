@@ -8,7 +8,27 @@ import Stock from './pages/Stock'
 import Productos from './pages/Productos'
 import Resumenes from './pages/Resumenes'
 import Ganancias from './pages/Ganancias'
+import Asistencia from './pages/Asistencia'
 import { useAuth } from './useAuth'
+import PantallaError from './components/PantallaError'
+
+const VISTAS = [
+  'inicio',
+  'nueva',
+  'stock',
+  'productos',
+  'resumenes',
+  'ganancias',
+  'asistencia',
+  'password',
+]
+
+// En modo kiosco la app se abre con la ruta ya puesta (por ejemplo /asistencia),
+// así la máquina del local arranca directo en la pantalla de marcar.
+function vistaInicial() {
+  const ruta = window.location.pathname.replace(/^\/+|\/+$/g, '')
+  return VISTAS.includes(ruta) ? ruta : 'inicio'
+}
 
 export default function App() {
   const usuario = useAuth((s) => s.usuario)
@@ -16,7 +36,7 @@ export default function App() {
   const iniciando = useAuth((s) => s.iniciando)
   const logout = useAuth((s) => s.logout)
 
-  const [vista, setVista] = useState('inicio')
+  const [vista, setVista] = useState(vistaInicial)
   // Sub-pestaña de NuevaComanda ("nueva" o "comandas"), para poder llegar
   // desde el inicio a las comandas en curso
   const [tabComanda, setTabComanda] = useState('nueva')
@@ -67,11 +87,16 @@ export default function App() {
         {vista === 'productos' && <Productos />}
         {vista === 'resumenes' && <Resumenes />}
         {vista === 'ganancias' && <Ganancias />}
+        {vista === 'asistencia' && <Asistencia />}
         {vista === 'password' && <CambiarPassword />}
-        {!['inicio', 'nueva', 'stock', 'productos', 'resumenes', 'ganancias', 'password'].includes(
-          vista
-        ) && (
-          <p className="p-8 text-lg text-piedra">Pantalla en construcción: {vista}</p>
+        {!VISTAS.includes(vista) && (
+          <PantallaError
+            titulo="No encontramos esa pantalla"
+            mensaje="El enlace puede estar mal escrito o la pantalla todavía no existe."
+            detalle={vista}
+            accion={{ etiqueta: 'Ir al inicio', onClick: () => setVista('inicio') }}
+            secundario={{ etiqueta: 'Cerrar sesión', onClick: () => logout() }}
+          />
         )}
       </div>
     </div>

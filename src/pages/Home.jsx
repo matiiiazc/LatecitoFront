@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
+import { useAuth } from '../useAuth'
 
 const dinero = (n) => `$${Math.round(n).toLocaleString('es-AR')}`
 
@@ -18,8 +19,20 @@ function urlComandasDeHoy() {
   return `/comandas?desde=${hoy.toISOString()}&hasta=${manana.toISOString()}&limite=100`
 }
 
+// El resumen de ganancias es exclusivo del admin, así que va del 1° del mes
+// hasta hoy: alcanza para el cartel del inicio y pesa poco.
+const diaLocal = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+function urlGananciasDelMes() {
+  const hoy = diaLocal(new Date())
+  return `/gastos/resumen?desde=${hoy.slice(0, 7)}-01&hasta=${hoy}`
+}
+
 export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} }) {
+  const esAdmin = useAuth((s) => s.usuario?.rol === 'admin')
   const [comandas, setComandas] = useState([])
+  const [ganancias, setGanancias] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [anulando, setAnulando] = useState(null)
@@ -61,6 +74,31 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
       vivo = false
     }
   }, [])
+
+  // El admin ve el resultado del mes apenas entra. Si falla, el resto de la
+  // pantalla sigue funcionando: solo se omite ese cartel.
+  useEffect(() => {
+    if (!esAdmin) return
+    let vivo = true
+    ;(async () => {
+      try {
+        const datos = await api(urlGananciasDelMes())
+        if (vivo) setGanancias(datos)
+      } catch (e) {
+        if (vivo) console.error('No se pudo cargar el resumen de ganancias:', e.message)
+      }
+    })()
+    return () => {
+      vivo = false
+    }
+  }, [esAdmin])
+
+  // El último día del período es hoy: el rango del mes termina en el día de hoy
+  const { mes, hoy } = useMemo(() => {
+    if (!ganancias) return { mes: null, hoy: null }
+    const ultimo = ganancias.dias?.at(-1) ?? null
+    return { mes: ganancias.totales, hoy: ultimo }
+  }, [ganancias])
 
   // Solo lo cobrado cuenta como venta: las que quedaron en curso todavía no
   // entró la plata. Las anuladas se informan aparte.
@@ -137,18 +175,36 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
           </div>
         </div>
 
-        <dl className="mx-auto mt-10 grid max-w-6xl grid-cols-3 border-t border-mocha">
+        <dl
+          className={`mx-auto mt-10 grid max-w-6xl border-t border-mocha ${
+            esAdmin ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'
+          }`}
+        >
           {[
-            ['Vendido hoy', dinero(vendido)],
-            ['Ticket promedio', dinero(ticket)],
-            ['Comandas del día', ventas.length],
-          ].map(([etiqueta, valor], i) => (
+            { etiqueta: 'Vendido hoy', valor: dinero(vendido) },
+            { etiqueta: 'Ticket promedio', valor: dinero(ticket) },
+            { etiqueta: 'Comandas del día', valor: ventas.length },
+            ...(esAdmin
+              ? [
+                  {
+                    etiqueta: 'Ganado hoy',
+                    valor: dinero(hoy?.resultado ?? 0),
+                    tono:
+                      (hoy?.resultado ?? 0) < 0 ? 'text-rose-300' : 'text-emerald-300',
+                  },
+                ]
+              : []),
+          ].map(({ etiqueta, valor, tono }, i) => (
             <div
               key={etiqueta}
               className={`px-3 py-4 sm:px-6 sm:py-5 ${i > 0 ? 'border-l border-mocha' : ''}`}
             >
               <dt className="text-xs text-latte/70 sm:text-sm">{etiqueta}</dt>
-              <dd className="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl md:text-3xl">
+              <dd
+                className={`mt-1 text-xl font-bold tabular-nums sm:text-2xl md:text-3xl ${
+                  tono ?? 'text-white'
+                }`}
+              >
                 {valor}
               </dd>
             </div>
@@ -188,6 +244,45 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
               Verlas
             </button>
           </p>
+        )}
+
+        {esAdmin && mes && (
+          <section className="mb-8 rounded-2xl border border-linea bg-white p-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="text-2xl font-bold text-mocha">Este mes</h2>
+              <button
+                type="button"
+                onClick={() => onNavigate('ganancias')}
+                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-mocha transition-colors hover:bg-latte/40 focus-visible:outline-2 focus-visible:outline-mocha"
+              >
+                Ver detalle
+              </button>
+            </div>
+
+            <dl className="mt-4 grid grid-cols-3 gap-3">
+              {[
+                ['Ventas', dinero(mes.ingresos), 'text-tinta'],
+                ['Gastos', dinero(mes.gastos), 'text-tinta'],
+                [
+                  'Ganado',
+                  dinero(mes.resultado),
+                  mes.resultado < 0 ? 'text-rose-700' : 'text-emerald-700',
+                ],
+              ].map(([etiqueta, valor, tono]) => (
+                <div key={etiqueta} className="rounded-xl bg-hueso p-3">
+                  <dt className="text-xs text-piedra">{etiqueta}</dt>
+                  <dd className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${tono}`}>
+                    {valor}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            <p className="mt-3 text-xs text-piedra">
+              Resultado = ventas menos gastos, sin descontar el costo de los productos. Cargá los
+              gastos en Ganancias para que el número sea real.
+            </p>
+          </section>
         )}
 
         {top3.length > 0 && (

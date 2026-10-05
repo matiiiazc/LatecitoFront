@@ -26,6 +26,10 @@ const TIPOS = {
   mesa_eliminada: { etiqueta: 'Mesa eliminada', tono: 'bg-orange-100 text-orange-900' },
   gasto_creado: { etiqueta: 'Gasto cargado', tono: 'bg-rose-100 text-rose-900' },
   gasto_borrado: { etiqueta: 'Gasto borrado', tono: 'bg-rose-100 text-rose-900' },
+  asistencia_entrada: { etiqueta: 'Entrada', tono: 'bg-teal-100 text-teal-900' },
+  asistencia_salida: { etiqueta: 'Salida', tono: 'bg-teal-100 text-teal-900' },
+  equipo_vinculado: { etiqueta: 'Equipo vinculado', tono: 'bg-cyan-100 text-cyan-900' },
+  equipo_baja: { etiqueta: 'Equipo dado de baja', tono: 'bg-cyan-100 text-cyan-900' },
 }
 
 const LIMITE = 200
