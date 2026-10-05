@@ -9,11 +9,13 @@ import Productos from './pages/Productos'
 import Resumenes from './pages/Resumenes'
 import Ganancias from './pages/Ganancias'
 import Asistencia from './pages/Asistencia'
+import TurnoCaja from './pages/TurnoCaja'
 import { useAuth } from './useAuth'
 import PantallaError from './components/PantallaError'
 
 const VISTAS = [
   'inicio',
+  'turno',
   'nueva',
   'stock',
   'productos',
@@ -23,8 +25,8 @@ const VISTAS = [
   'password',
 ]
 
-// En modo kiosco la app se abre con la ruta ya puesta (por ejemplo /asistencia),
-// así la máquina del local arranca directo en la pantalla de marcar.
+// En modo kiosco la app se abre con la ruta ya puesta (por ejemplo /turno),
+// así la máquina del mostrador arranca directo en la pantalla de la caja.
 function vistaInicial() {
   const ruta = window.location.pathname.replace(/^\/+|\/+$/g, '')
   return VISTAS.includes(ruta) ? ruta : 'inicio'
@@ -82,6 +84,7 @@ export default function App() {
             }}
           />
         )}
+        {vista === 'turno' && <TurnoCaja />}
         {vista === 'nueva' && <NuevaComanda tab={tabComanda} onTab={setTabComanda} />}
         {vista === 'stock' && <Stock />}
         {vista === 'productos' && <Productos />}

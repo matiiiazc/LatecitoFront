@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useTurno } from '../turno'
 
 const ICONOS = {
   inicio: ['M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z'],
+  turno: ['M3 7h18v12H3z', 'M3 11h18', 'M7 15h4'],
   nueva: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 'M12 8v8M8 12h8'],
   stock: ['M21 8l-9-5-9 5v8l9 5 9-5z', 'M3 8l9 5 9-5', 'M12 13v8'],
   asistencia: ['M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0z', 'M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1'],
@@ -37,9 +39,10 @@ function Icono({ nombre, className = '' }) {
 
 const NAV = [
   { id: 'inicio', etiqueta: 'Inicio' },
+  { id: 'turno', etiqueta: 'Caja del día' },
   { id: 'nueva', etiqueta: 'Nueva comanda' },
   { id: 'stock', etiqueta: 'Stock' },
-  { id: 'asistencia', etiqueta: 'Asistencia' },
+  { id: 'asistencia', etiqueta: 'Caja y asistencia', soloAdmin: true },
   { id: 'resumenes', etiqueta: 'Actividad', soloAdmin: true },
   { id: 'ganancias', etiqueta: 'Ganancias', soloAdmin: true },
   { id: 'productos', etiqueta: 'Productos', soloAdmin: true },
@@ -48,9 +51,10 @@ const NAV = [
 // Etiquetas cortas para la barra inferior del celular
 const ETIQUETA_CORTA = {
   inicio: 'Inicio',
+  turno: 'Caja',
   nueva: 'Nueva',
   stock: 'Stock',
-  asistencia: 'Asistencia',
+  asistencia: 'Caja',
   resumenes: 'Actividad',
   ganancias: 'Ganancias',
   productos: 'Productos',
@@ -66,6 +70,13 @@ export default function Sidebar({
   // En pantallas chicas arranca plegada
   const [abierto, setAbierto] = useState(() => window.innerWidth >= 768)
   const [sesion, setSesion] = useState(false)
+  const turno = useTurno((s) => s.turno)
+  const cargarTurno = useTurno((s) => s.cargar)
+
+  // Quién atiende se muestra siempre: es el dato que más se mira del día
+  useEffect(() => {
+    cargarTurno()
+  }, [cargarTurno])
 
   const items = NAV.filter((i) => !i.soloAdmin || rol === 'admin')
 
@@ -126,6 +137,14 @@ export default function Sidebar({
 
         {/* Cuenta */}
         <div className="flex flex-col gap-1.5 border-t border-mocha px-3 py-4">
+          {abierto && (
+            <div className="mb-1.5 rounded-xl bg-mocha/40 px-3 py-2">
+              <p className="text-xs text-latte/70">Atendiendo</p>
+              <p className="truncate font-semibold text-latte">
+                {turno ? turno.usuario : 'Nadie todavía'}
+              </p>
+            </div>
+          )}
           {abierto && (
             <p className="mb-1.5 px-3 text-sm text-latte/70">
               Sesión de <span className="font-semibold text-latte">{cuenta.nombre}</span>
@@ -218,8 +237,26 @@ export default function Sidebar({
               <span className="font-semibold text-mocha">{cuenta.nombre}</span>
             </p>
 
-            <div className="mt-4 flex flex-col gap-2">
-              <button
+            <p className="mt-2 rounded-xl bg-white px-3 py-2 text-sm">
+              <span className="text-piedra">Atendiendo: </span>
+              <span className="font-semibold text-mocha">
+                {turno ? turno.usuario : 'Nadie todavía'}
+              </span>
+            </p>
+
+          <div className="mt-4 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSesion(false)
+                onNavigate('turno')
+              }}
+              className="flex w-full items-center gap-3 rounded-xl bg-espresso px-4 py-3 font-semibold text-latte transition-colors hover:bg-mocha"
+            >
+              <Icono nombre="turno" />
+              {turno ? `Cerrar caja (${turno.usuario})` : 'Abrir caja'}
+            </button>
+            <button
                 type="button"
                 onClick={() => {
                   setSesion(false)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../useAuth'
+import { useTurno } from '../turno'
 
 const dinero = (n) => `$${Math.round(n).toLocaleString('es-AR')}`
 
@@ -31,6 +32,7 @@ function urlGananciasDelMes() {
 
 export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} }) {
   const esAdmin = useAuth((s) => s.usuario?.rol === 'admin')
+  const cargarTurno = useTurno((s) => s.cargar)
   const [comandas, setComandas] = useState([])
   const [ganancias, setGanancias] = useState(null)
   const [cargando, setCargando] = useState(true)
@@ -74,6 +76,14 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
       vivo = false
     }
   }, [])
+
+  // El turno abierto se refresca junto con la pantalla: si lo abre o cierra
+  // otro desde el kiosco, el Inicio tiene que mostrarlo al toque
+  useEffect(() => {
+    cargarTurno()
+    const cada = setInterval(cargarTurno, 30000)
+    return () => clearInterval(cada)
+  }, [cargarTurno])
 
   // El admin ve el resultado del mes apenas entra. Si falla, el resto de la
   // pantalla sigue funcionando: solo se omite ese cartel.
@@ -229,6 +239,8 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
             {error}
           </p>
         )}
+
+        <TurnoAbierto onIr={() => onNavigate('turno')} />
 
         {enCurso > 0 && (
           <p className="mb-6 flex flex-wrap items-center gap-3 rounded-xl bg-latte/40 px-4 py-3 text-mocha">
@@ -423,5 +435,53 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
         )}
       </main>
     </div>
+  )
+}
+
+// Quién está atendiendo ahora. Es lo primero que se ve al abrir la app en el
+// mostrador: o hay que elegir perfil, o se ve el turno en curso y se cierra.
+function TurnoAbierto({ onIr }) {
+  const turno = useTurno((s) => s.turno)
+  const cargando = useTurno((s) => s.cargando)
+
+  if (!turno) {
+    return (
+      <section className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-dashed border-mocha/40 bg-white p-5">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-piedra">Caja</p>
+          <h2 className="mt-0.5 text-2xl font-bold text-mocha">No hay nadie atendiendo</h2>
+          <p className="mt-1 text-sm text-piedra">
+            Elegí tu nombre para abrir el turno y marcar tu entrada.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onIr}
+          className="rounded-xl bg-espresso px-5 py-3 font-semibold text-latte transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+        >
+          Elegir perfil
+        </button>
+      </section>
+    )
+  }
+
+  return (
+    <section className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5">
+      <div>
+        <p className="text-xs uppercase tracking-wide text-emerald-800">Atendiendo ahora</p>
+        <h2 className="mt-0.5 text-2xl font-bold text-emerald-900">{turno.usuario}</h2>
+        <p className="mt-1 text-sm text-emerald-800">
+          Desde las {new Date(turno.abierto_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} ·{' '}
+          {dinero(turno.vendido)} vendidos en el turno
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onIr}
+        className="rounded-xl bg-espresso px-5 py-3 font-semibold text-latte transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+      >
+        {cargando ? 'Cerrar caja…' : 'Ir a la caja'}
+      </button>
+    </section>
   )
 }

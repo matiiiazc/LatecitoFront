@@ -12,10 +12,13 @@ export const onSesionVencida = (fn) => {
 }
 
 export class ApiError extends Error {
-  constructor(mensaje, estado, codigo) {
+  constructor(mensaje, estado, codigo, datos) {
     super(mensaje)
     this.estado = estado
     this.codigo = codigo
+    // El cuerpo completo, para cuando el servidor manda detalles del error
+    // (por ejemplo, cuánto se esperaba en la gaveta al cerrarla)
+    this.datos = datos
   }
 }
 
@@ -40,7 +43,7 @@ export async function api(ruta, { metodo = 'GET', cuerpo, sinToken = false } = {
   if (!respuesta.ok) {
     // 401 con un token guardado = la sesión venció o dejó de ser válida
     if (respuesta.status === 401 && token) alVencerSesion()
-    throw new ApiError(datos.error ?? 'Ocurrió un error', respuesta.status, datos.codigo)
+    throw new ApiError(datos.error ?? 'Ocurrió un error', respuesta.status, datos.codigo, datos)
   }
   return datos
 }
