@@ -68,7 +68,6 @@ export default function Cobrar({ total, enviando, error, onConfirmar, onCancelar
               autoFocus
               value={recibido}
               onChange={(e) => setRecibido(e.target.value)}
-              placeholder={String(Math.ceil(total))}
               className={CAMPO}
             />
             {recibido !== '' && (

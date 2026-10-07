@@ -86,7 +86,6 @@ export default function Horas() {
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
               inputMode="decimal"
-              placeholder="8500"
               className={`${CAMPOS} pl-7 text-lg font-bold tabular-nums`}
             />
           </div>

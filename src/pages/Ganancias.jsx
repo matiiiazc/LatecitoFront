@@ -278,7 +278,6 @@ export default function Ganancias() {
                   value={monto}
                   onChange={(e) => setMonto(e.target.value)}
                   required
-                  placeholder="0.00"
                   className={CAMPOS}
                 />
               </div>

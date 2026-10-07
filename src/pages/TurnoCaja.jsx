@@ -147,7 +147,6 @@ function AbrirTurno({ perfiles, cargando }) {
                 onChange={(e) => setBase(e.target.value)}
                 inputMode="decimal"
                 autoFocus
-                placeholder="0"
                 className={`${CAMPOS} pl-7 text-lg font-semibold tabular-nums`}
               />
             </div>

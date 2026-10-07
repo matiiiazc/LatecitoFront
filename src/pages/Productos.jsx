@@ -542,7 +542,6 @@ export default function Productos() {
                       type="number"
                       min="0"
                       step="0.01"
-                      placeholder="+$"
                       className={`${CAMPO} w-28`}
                     />
                     <button
