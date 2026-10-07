@@ -1,10 +1,11 @@
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 const CLAVE_TOKEN = 'lattecito_token'
 
-// sessionStorage: la sesión se borra al cerrar la pestaña, mejor en una PC compartida
-export const getToken = () => sessionStorage.getItem(CLAVE_TOKEN)
+// La sesión queda guardada aunque se cierre el navegador: en el mostrador la
+// máquina tiene que amanecer abierta. El botón de cambiar de cuenta la borra.
+export const getToken = () => localStorage.getItem(CLAVE_TOKEN)
 export const setToken = (token) =>
-  token ? sessionStorage.setItem(CLAVE_TOKEN, token) : sessionStorage.removeItem(CLAVE_TOKEN)
+  token ? localStorage.setItem(CLAVE_TOKEN, token) : localStorage.removeItem(CLAVE_TOKEN)
 
 let alVencerSesion = () => {}
 export const onSesionVencida = (fn) => {

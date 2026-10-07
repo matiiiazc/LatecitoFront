@@ -10,6 +10,7 @@ import Resumenes from './pages/Resumenes'
 import Ganancias from './pages/Ganancias'
 import Asistencia from './pages/Asistencia'
 import TurnoCaja from './pages/TurnoCaja'
+import Horas from './pages/Horas'
 import { useAuth } from './useAuth'
 import PantallaError from './components/PantallaError'
 
@@ -22,6 +23,7 @@ const VISTAS = [
   'resumenes',
   'ganancias',
   'asistencia',
+  'horas',
   'password',
 ]
 
@@ -91,6 +93,7 @@ export default function App() {
         {vista === 'resumenes' && <Resumenes />}
         {vista === 'ganancias' && <Ganancias />}
         {vista === 'asistencia' && <Asistencia />}
+        {vista === 'horas' && <Horas />}
         {vista === 'password' && <CambiarPassword />}
         {!VISTAS.includes(vista) && (
           <PantallaError

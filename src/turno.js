@@ -58,7 +58,7 @@ export const useTurno = create((set, get) => ({
     return r.turno
   },
 
-  async cerrar(usuarioId, contadoEfectivo, nota) {
+  async cerrar(usuarioId, contadoEfectivo, contadoTransferencia, nota) {
     const equipo = await leerEquipo()
     if (!equipo?.equipoId) throw new Error('Esta máquina todavía no está vinculada')
     const { nonce, firma } = await pedirFirma(equipo.equipoId, usuarioId, 'salida')
@@ -68,6 +68,7 @@ export const useTurno = create((set, get) => ({
         usuario_id: usuarioId,
         equipo_id: equipo.equipoId,
         contado_efectivo: contadoEfectivo,
+        contado_transferencia: contadoTransferencia,
         nota,
         nonce,
         firma,

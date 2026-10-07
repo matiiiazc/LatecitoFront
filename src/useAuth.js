@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { api, getToken, setToken, onSesionVencida } from './api'
 
+// La máquina del mostrador tiene que quedar abierta siempre: cada 6 horas se
+// renueva el token para que nunca venza mientras la app esté prendida, y el
+// token de la caja dura un año igualmente.
+const RENOVAR_CADA_MS = 6 * 60 * 60 * 1000
+
 export const useAuth = create((set) => ({
   usuario: null,
   debeCambiarPassword: false,
@@ -14,6 +19,7 @@ export const useAuth = create((set) => ({
     try {
       const { usuario, debeCambiarPassword } = await api('/auth/me')
       set({ usuario, debeCambiarPassword, iniciando: false })
+      renovarAhora()
     } catch {
       setToken(null)
       set({ usuario: null, iniciando: false })
@@ -32,6 +38,7 @@ export const useAuth = create((set) => ({
       debeCambiarPassword: datos.debeCambiarPassword,
       aviso: '',
     })
+    renovarAhora()
   },
 
   async cambiarPassword(actual, nueva) {
@@ -47,8 +54,26 @@ export const useAuth = create((set) => ({
   // También es lo que hace el botón "Cambiar de cuenta"
   logout(aviso = '') {
     setToken(null)
+    clearInterval(timer)
     set({ usuario: null, debeCambiarPassword: false, iniciando: false, aviso })
   },
 }))
+
+let timer = 0
+
+// Pide un token nuevo con la misma sesión. Si el servidor no responde no pasa
+// nada: el token actual sigue sirviendo hasta que venza.
+async function renovarAhora() {
+  clearInterval(timer)
+  try {
+    const { token } = await api('/auth/renovar', { metodo: 'POST' })
+    setToken(token)
+  } catch {
+    /* se reintenta en la próxima vuelta */
+  }
+  timer = setInterval(() => {
+    renovarAhora()
+  }, RENOVAR_CADA_MS)
+}
 
 onSesionVencida(() => useAuth.getState().logout('Tu sesión venció. Ingresá de nuevo.'))

@@ -90,11 +90,13 @@ export default function Stock() {
     setGuardando(true)
     setAviso(null)
     try {
+      // El rol caja solo puede cargar mercadería que entra; el admin elige
+      const tipoReal = esAdmin ? tipo : 'compra'
       const r = await api('/stock/entrada', {
         metodo: 'POST',
         cuerpo: {
           producto_id: Number(productoId),
-          tipo,
+          tipo: tipoReal,
           cantidad: Number(cantidad),
           motivo,
         },
@@ -156,12 +158,15 @@ export default function Stock() {
         </p>
       )}
 
-      {/* Cargar stock: solo el admin */}
-      {esAdmin && (
-        <form onSubmit={registrar} className="mt-6 rounded-2xl border border-linea bg-white p-5">
-          <h2 className="text-lg font-bold text-mocha">Cargar o corregir stock</h2>
+      {/* Cargar stock. El admin también puede restar; el rol caja solo suma */}
+      <form onSubmit={registrar} className="mt-6 rounded-2xl border border-linea bg-white p-5">
+        <h2 className="text-lg font-bold text-mocha">
+          {esAdmin ? 'Cargar o corregir stock' : 'Cargar mercadería'}
+        </h2>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <div
+          className={`mt-4 grid gap-3 ${esAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+        >
             <div className="md:col-span-2">
               <label htmlFor="prod" className="mb-1 block text-sm font-medium text-piedra">
                 Producto
@@ -182,23 +187,25 @@ export default function Stock() {
               </select>
             </div>
 
-            <div>
-              <label htmlFor="tipo" className="mb-1 block text-sm font-medium text-piedra">
-                Tipo
-              </label>
-              <select
-                id="tipo"
-                value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
-                className={CAMPO}
-              >
-                {TIPOS.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.etiqueta}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {esAdmin && (
+              <div>
+                <label htmlFor="tipo" className="mb-1 block text-sm font-medium text-piedra">
+                  Tipo
+                </label>
+                <select
+                  id="tipo"
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
+                  className={CAMPO}
+                >
+                  {TIPOS.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.etiqueta}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label htmlFor="cant" className="mb-1 block text-sm font-medium text-piedra">
@@ -209,9 +216,10 @@ export default function Stock() {
                 type="number"
                 inputMode="numeric"
                 step="1"
+                min={esAdmin ? undefined : 1}
                 value={cantidad}
                 onChange={(e) => setCantidad(e.target.value)}
-                placeholder={tipo === 'ajuste' ? '-5 o 10' : '10'}
+                placeholder={esAdmin && tipo === 'ajuste' ? '-5 o 10' : '10'}
                 required
                 className={CAMPO}
               />
@@ -219,7 +227,14 @@ export default function Stock() {
           </div>
 
           <p className="mt-2 text-sm text-piedra">
-            {TIPOS.find((t) => t.id === tipo)?.ayuda}. En ajustes, un número negativo saca stock.
+            {esAdmin ? (
+              <>
+                {TIPOS.find((t) => t.id === tipo)?.ayuda}. En ajustes, un número negativo saca
+                stock.
+              </>
+            ) : (
+              'Solo podés cargar mercadería que entró. Las mermas y las correcciones las hace el administrador.'
+            )}
           </p>
 
           <div className="mt-3">
@@ -245,7 +260,6 @@ export default function Stock() {
             {guardando ? 'Guardando...' : 'Registrar movimiento'}
           </button>
         </form>
-      )}
 
       {/* Inventario */}
       <h2 className="mt-8 text-xl font-bold text-mocha">Inventario</h2>
