@@ -10,7 +10,6 @@ export default function Login() {
 
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
-  const [verPassword, setVerPassword] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -64,24 +63,15 @@ export default function Login() {
             <label htmlFor="password" className="mb-1 block font-medium">
               Contraseña
             </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={verPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`${CAMPO} pr-24`}
-              />
-              <button
-                type="button"
-                onClick={() => setVerPassword(!verPassword)}
-                className="absolute inset-y-0 right-2 my-2 rounded-lg px-3 text-sm text-mocha hover:bg-latte/40 focus-visible:outline-2 focus-visible:outline-mocha"
-              >
-                {verPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={CAMPO}
+            />
           </div>
 
           {error && (
