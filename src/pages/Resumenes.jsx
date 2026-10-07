@@ -12,10 +12,6 @@ const TIPOS = {
   print_job: { etiqueta: 'Impresión', tono: 'bg-indigo-100 text-indigo-900' },
   login: { etiqueta: 'Ingreso', tono: 'bg-lime-100 text-lime-900' },
   cambio_password: { etiqueta: 'Cambio de clave', tono: 'bg-purple-100 text-purple-900' },
-  usuario_creado: { etiqueta: 'Usuario creado', tono: 'bg-purple-100 text-purple-900' },
-  usuario_reset: { etiqueta: 'Reset de clave', tono: 'bg-purple-100 text-purple-900' },
-  usuario_activado: { etiqueta: 'Usuario activado', tono: 'bg-purple-100 text-purple-900' },
-  usuario_desactivado: { etiqueta: 'Usuario desactivado', tono: 'bg-purple-100 text-purple-900' },
   producto_creado: { etiqueta: 'Producto creado', tono: 'bg-pink-100 text-pink-900' },
   producto_editado: { etiqueta: 'Producto editado', tono: 'bg-pink-100 text-pink-900' },
   producto_borrado: { etiqueta: 'Producto borrado', tono: 'bg-pink-100 text-pink-900' },
@@ -26,10 +22,8 @@ const TIPOS = {
   mesa_eliminada: { etiqueta: 'Mesa eliminada', tono: 'bg-orange-100 text-orange-900' },
   gasto_creado: { etiqueta: 'Gasto cargado', tono: 'bg-rose-100 text-rose-900' },
   gasto_borrado: { etiqueta: 'Gasto borrado', tono: 'bg-rose-100 text-rose-900' },
-  asistencia_entrada: { etiqueta: 'Entrada', tono: 'bg-teal-100 text-teal-900' },
-  asistencia_salida: { etiqueta: 'Salida', tono: 'bg-teal-100 text-teal-900' },
-  equipo_vinculado: { etiqueta: 'Equipo vinculado', tono: 'bg-cyan-100 text-cyan-900' },
-  equipo_baja: { etiqueta: 'Equipo dado de baja', tono: 'bg-cyan-100 text-cyan-900' },
+  turno_abierto: { etiqueta: 'Caja abierta', tono: 'bg-amber-100 text-amber-900' },
+  turno_cerrado: { etiqueta: 'Caja cerrada', tono: 'bg-teal-100 text-teal-900' },
 }
 
 const LIMITE = 200
