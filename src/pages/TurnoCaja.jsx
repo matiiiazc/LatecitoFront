@@ -438,7 +438,6 @@ function CerrarCaja({ turno, onCancelar }) {
                       etiqueta="Efectivo contado"
                       valor={contado}
                       onChange={setContado}
-                      placeholder="33000"
                       autoFocus
                       diferencia={contado.trim() !== '' && Number.isFinite(numeroContado) ? diferencia : null}
                     />
@@ -447,7 +446,6 @@ function CerrarCaja({ turno, onCancelar }) {
                       etiqueta="Transferencia contada"
                       valor={contadoTrans}
                       onChange={setContadoTrans}
-                      placeholder={pesos(esperadoTrans)}
                       diferencia={
                         contadoTrans.trim() !== '' && Number.isFinite(numeroTrans)
                           ? diferenciaTrans
@@ -549,7 +547,7 @@ function FilaEspera({ etiqueta, valor, atenuado = false }) {
 }
 
 // Campo de plata con su estado en vivo: cuadra, faltan o sobran
-function CampoConteo({ id, etiqueta, valor, onChange, placeholder, diferencia, autoFocus = false }) {
+function CampoConteo({ id, etiqueta, valor, onChange, diferencia, autoFocus = false }) {
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm font-medium text-piedra">
@@ -565,7 +563,6 @@ function CampoConteo({ id, etiqueta, valor, onChange, placeholder, diferencia, a
           onChange={(e) => onChange(e.target.value)}
           inputMode="decimal"
           autoFocus={autoFocus}
-          placeholder={placeholder}
           className="w-full rounded-2xl border-2 border-linea bg-white py-4 pl-11 pr-4 text-3xl font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
         />
         {diferencia !== null && (
