@@ -40,6 +40,8 @@ const BOTON =
 const TARJETA = 'rounded-2xl border border-linea bg-white p-5'
 const ERROR = 'rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800'
 
+const PAGINA = 'mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 md:p-8'
+
 // --- Pantalla principal ---
 
 export default function TurnoCaja() {
@@ -58,7 +60,7 @@ export default function TurnoCaja() {
 
   if (!turno) return <AbrirTurno perfiles={perfiles} cargando={cargando} />
 
-  return <TurnoAbierto turno={turno} perfiles={perfiles} />
+  return <TurnoAbierto turno={turno} />
 }
 
 // --- Abrir el turno: elegir perfil y contar la base ---
@@ -86,25 +88,39 @@ function AbrirTurno({ perfiles, cargando }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className={TARJETA}>
-        <p className="text-sm text-piedra">Ahora mismo</p>
-        <h2 className="text-2xl font-extrabold text-espresso">No hay nadie atendiendo</h2>
+    <div className={PAGINA}>
+      <header className="mb-1">
+        <p className="text-sm text-piedra">Caja del día</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-espresso">
+          No hay nadie atendiendo
+        </h1>
         <p className="mt-1 text-sm text-piedra">¿Quién abre el turno?</p>
+      </header>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className={TARJETA}>
+        <div className="grid grid-cols-2 gap-3">
           {perfiles.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => setElegido(p)}
-              className={`rounded-2xl border-2 px-3 py-5 text-lg font-bold transition-colors ${
+              className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-4 text-left transition-colors ${
                 elegido?.id === p.id
-                  ? 'border-espresso bg-latte/60 text-espresso'
-                  : 'border-linea bg-white text-tinta hover:border-mocha'
+                  ? 'border-espresso bg-latte/60'
+                  : 'border-linea bg-white hover:border-mocha'
               }`}
             >
-              {p.nombre}
+              <span
+                className={`flex size-11 shrink-0 items-center justify-center rounded-full text-base font-bold ${
+                  elegido?.id === p.id ? 'bg-espresso text-latte' : 'bg-hueso text-mocha'
+                }`}
+              >
+                {p.nombre.slice(0, 1)}
+              </span>
+              <span>
+                <span className="block font-bold text-tinta">{p.nombre}</span>
+                <span className="block text-xs text-piedra">Abrir turno</span>
+              </span>
             </button>
           ))}
         </div>
@@ -161,7 +177,10 @@ function AbrirTurno({ perfiles, cargando }) {
 
 // --- Turno abierto ---
 
-function TurnoAbierto({ turno, perfiles }) {
+// El turno abierto muestra lo más importante del mostrador en una sola pasada:
+// quién atiende, hace cuánto, cuánto vendió y cómo se cobró. Lo de abajo es lo
+// que la persona hace al final del día: cerrar y contar la caja.
+function TurnoAbierto({ turno }) {
   const [cerrando, setCerrando] = useState(false)
 
   const efectivo = turno.por_metodo.find((m) => m.metodo === 'efectivo')
@@ -172,73 +191,136 @@ function TurnoAbierto({ turno, perfiles }) {
   )
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-green-300 bg-green-50 p-5">
-        <p className="text-sm text-green-900">Atendiendo</p>
-        <p className="text-2xl font-extrabold text-green-900">{turno.usuario}</p>
-        <p className="mt-1 text-sm text-green-900">Desde las {hora(turno.abierto_at)}</p>
-      </div>
-
-      <div className={TARJETA}>
-        <p className="text-sm text-piedra">Vendido en este turno</p>
-        <p className="text-3xl font-extrabold tabular-nums text-espresso">{pesos(turno.vendido)}</p>
-        <p className="mt-1 text-sm text-piedra">
+    <div className={PAGINA}>
+      <header className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-sm text-piedra">Turno de caja</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-espresso">El mostrador está abierto</h1>
+        </div>
+        <p className="shrink-0 text-sm text-piedra">
           {turno.comandas} {turno.comandas === 1 ? 'venta' : 'ventas'}
         </p>
+      </header>
 
-        <ul className="mt-4 flex flex-col gap-1 border-t border-linea pt-3 text-sm">
-          <li className="flex justify-between">
-            <span className="text-piedra">Efectivo (va a la gaveta)</span>
-            <span className="font-semibold tabular-nums text-tinta">
-              {pesos(efectivo?.total ?? 0)}
+      {/* Quién atiende */}
+      <section className="overflow-hidden rounded-3xl bg-espresso text-latte">
+        <div className="bg-gradient-to-br from-espresso via-[#3a2920] to-mocha p-6 md:p-8">
+          <div className="flex items-center gap-4">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-latte text-xl font-extrabold text-espresso">
+              {turno.usuario.slice(0, 1)}
             </span>
-          </li>
-          <li className="flex justify-between">
-            <span className="text-piedra">Transferencia</span>
-            <span className="font-semibold tabular-nums text-tinta">
-              {pesos(transferencia?.total ?? 0)}
-            </span>
-          </li>
-          <li className="flex justify-between rounded-lg bg-mocha/10 px-2 py-1">
-            <span className="font-medium text-mocha">Mercado Pago</span>
-            <span className="font-semibold tabular-nums text-mocha">
-              {pesos(mp?.total ?? 0)}
-            </span>
-          </li>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-latte/70">Atendiendo ahora</p>
+              <p className="text-3xl font-extrabold leading-none">{turno.usuario}</p>
+              <p className="mt-1.5 text-sm text-latte/70">
+                Desde las <span className="font-semibold text-latte">{hora(turno.abierto_at)}</span> ·{' '}
+                <EnTurnoDesde abiertoAt={turno.abierto_at} />
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 flex items-end justify-between gap-4 border-t border-mocha pt-5">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-latte/70">Vendido en este turno</p>
+              <p className="mt-1 text-4xl font-extrabold tabular-nums md:text-5xl">
+                {pesos(turno.vendido)}
+              </p>
+            </div>
+            <p className="shrink-0 rounded-xl bg-white/10 px-3 py-2 text-sm text-latte/90">
+              Base {pesos(turno.base_efectivo)}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Cómo se cobró */}
+      <section className={TARJETA}>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-semibold text-espresso">Cómo se cobró</h2>
+          <p className="text-xs text-piedra">Efectivo y transferencia se cuentan al cerrar</p>
+        </div>
+
+        <ul className="flex flex-col divide-y divide-linea">
+          <FilaCobro
+            etiqueta="Efectivo"
+            detalle="Va a la gaveta"
+            total={efectivo?.total ?? 0}
+            destacado="text-emerald-700"
+          />
+          <FilaCobro
+            etiqueta="Transferencia"
+            detalle="Se concilia aparte"
+            total={transferencia?.total ?? 0}
+            destacado="text-espresso"
+          />
+          <FilaCobro
+            etiqueta="Mercado Pago"
+            detalle="No deja plata en el local"
+            total={mp?.total ?? 0}
+            atenuado
+          />
           {otros.map((m) => (
-            <li key={m.metodo} className="flex justify-between">
-              <span className="text-piedra capitalize">{m.metodo}</span>
-              <span className="tabular-nums text-tinta">{pesos(m.total)}</span>
-            </li>
+            <FilaCobro
+              key={m.metodo}
+              etiqueta={m.metodo}
+              total={m.total}
+              atenuado
+            />
           ))}
         </ul>
-
-        <p className="mt-3 text-xs text-piedra">
-          Base con la que arrancó el turno: {pesos(turno.base_efectivo)}
-        </p>
-      </div>
+      </section>
 
       <button
         type="button"
         onClick={() => setCerrando(true)}
-        className={`${BOTON} w-full py-5 text-xl`}
+        className="w-full rounded-2xl bg-espresso px-6 py-5 text-xl font-bold text-latte shadow-lg shadow-espresso/20 transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
       >
         Cerrar caja
       </button>
 
-      {cerrando && <CerrarCaja turno={turno} perfiles={perfiles} onCancelar={() => setCerrando(false)} />}
+      {cerrando && <CerrarCaja turno={turno} onCancelar={() => setCerrando(false)} />}
     </div>
   )
 }
 
+function FilaCobro({ etiqueta, detalle, total, destacado = 'text-tinta', atenuado = false }) {
+  return (
+    <li className="flex items-center justify-between gap-3 py-3">
+      <div className="min-w-0">
+        <p className={`font-medium ${atenuado ? 'text-piedra' : 'text-tinta'}`}>{etiqueta}</p>
+        {detalle && <p className="text-xs text-piedra">{detalle}</p>}
+      </div>
+      <p
+        className={`shrink-0 text-lg font-bold tabular-nums ${
+          atenuado ? 'text-piedra' : destacado
+        }`}
+      >
+        {pesos(total)}
+      </p>
+    </li>
+  )
+}
+
+// "Desde hace cuánto" con un tick cada 30 segundos, sin apretar nada
+function EnTurnoDesde({ abiertoAt }) {
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setAhora(Date.now()), 30000)
+    return () => clearInterval(id)
+  }, [])
+  const ms = Math.max(0, ahora - new Date(abiertoAt).getTime())
+  const horas = Math.floor(ms / 3600000)
+  const minutos = Math.floor((ms % 3600000) / 60000)
+  return horas === 0 ? `${minutos} min` : `${horas} h ${minutos} min`
+}
+
 // --- Cerrar caja: el conteo ---
 
-function CerrarCaja({ turno, perfiles, onCancelar }) {
+// El cierre es una sola cosa con pasos: primero se muestra lo que se espera,
+// después se carga lo que se contó y por último se confirma. Solo quien abrió
+// el turno puede cerrarlo, así que no hay selector de persona.
+function CerrarCaja({ turno, onCancelar }) {
   const { cerrar } = useTurno()
-  // El turno lo abrió un perfil concreto: ese queda elegido de entrada
-  const [elegido, setElegido] = useState(
-    perfiles.find((p) => p.id === turno.usuario_id) ?? null,
-  )
   const [contado, setContado] = useState('')
   const [contadoTrans, setContadoTrans] = useState('')
   const [nota, setNota] = useState('')
@@ -280,7 +362,7 @@ function CerrarCaja({ turno, perfiles, onCancelar }) {
     setError('')
     try {
       const r = await cerrar(
-        elegido.id,
+        turno.usuario_id,
         numeroContado,
         contadoTrans.trim() === '' ? 0 : numeroTrans,
         nota.trim() || undefined,
@@ -295,247 +377,283 @@ function CerrarCaja({ turno, perfiles, onCancelar }) {
     }
   }
 
-  if (resumen) {
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-green-300 bg-green-50 p-5 text-center">
-          <p className="text-3xl">✓</p>
-          <h2 className="mt-1 text-xl font-extrabold text-green-900">Turno cerrado</h2>
-          <p className="mt-1 text-sm text-green-900">Salida registrada a las {hora(resumen.cerrado_at)}</p>
-        </div>
-        <div className={TARJETA}>
-          <dl className="flex flex-col gap-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-piedra">Base con la que arrancó</dt>
-              <dd className="tabular-nums text-tinta">{pesos(resumen.base_efectivo)}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-piedra">Esperado en la gaveta</dt>
-              <dd className="font-semibold tabular-nums text-tinta">{pesos(resumen.esperado_efectivo)}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-piedra">Efectivo contado</dt>
-              <dd className="font-semibold tabular-nums text-tinta">{pesos(resumen.contado_efectivo)}</dd>
-            </div>
-            <div className="flex justify-between border-t border-linea pt-2">
-              <dt className="text-piedra">Gaveta</dt>
-              <dd
-                className={`font-bold tabular-nums ${
-                  resumen.diferencia === 0 ? 'text-green-700' : 'text-red-700'
-                }`}
-              >
-                {resumen.diferencia === 0 ? 'Cuadró' : pesos(resumen.diferencia)}
-              </dd>
-            </div>
-            <div className="flex justify-between border-t border-linea pt-2">
-              <dt className="text-piedra">Transferencia</dt>
-              <dd
-                className={`font-bold tabular-nums ${
-                  resumen.diferencia_transferencia === 0 ? 'text-green-700' : 'text-red-700'
-                }`}
-              >
-                {resumen.diferencia_transferencia === 0
-                  ? 'Cuadró'
-                  : pesos(resumen.diferencia_transferencia)}{' '}
-                <span className="font-normal text-piedra">
-                  ({pesos(resumen.contado_transferencia)} contado vs {pesos(resumen.esperado_transferencia)})
-                </span>
-              </dd>
-            </div>
-          </dl>
-          {resumen.nota && (
-            <p className="mt-3 rounded-xl bg-latte/40 p-3 text-sm text-tinta">
-              <span className="font-semibold">Explicación:</span> {resumen.nota}
-            </p>
-          )}
-        </div>
-        <p className="text-center text-sm text-piedra">
-          Ya puede abrir su turno la próxima persona.
-        </p>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-4">
-      <div className={TARJETA}>
-        <h2 className="text-lg font-bold text-espresso">Cerrar caja</h2>
-        <p className="mt-1 text-sm text-piedra">
-          Contá el efectivo que queda en la gaveta y lo que entró por transferencia. Si algún
-          conteo no da con lo esperado, hay que explicarlo.
-        </p>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-espresso/50 backdrop-blur-sm">
+      <div className="flex min-h-full items-end justify-center sm:items-center">
+        <div className="w-full max-w-lg rounded-t-3xl bg-hueso pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl sm:rounded-3xl">
+          {resumen ? (
+            <CierreResultado resumen={resumen} onListo={onCancelar} />
+          ) : (
+            <>
+              {/* Cabecera del panel */}
+              <div className="flex items-center justify-between border-b border-linea px-5 py-4">
+                <div>
+                  <h2 className="text-xl font-extrabold text-espresso">Cerrar caja</h2>
+                  <p className="text-sm text-piedra">
+                    Turno de <span className="font-semibold text-mocha">{turno.usuario}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onCancelar}
+                  aria-label="Cancelar el cierre"
+                  className="rounded-xl p-2 text-piedra transition-colors hover:bg-latte/50 hover:text-tinta focus-visible:outline-2 focus-visible:outline-mocha"
+                >
+                  <IconoCerrar />
+                </button>
+              </div>
 
-        <dl className="mt-4 rounded-xl bg-latte/40 p-4 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-piedra">Base con la que arrancó</dt>
-            <dd className="tabular-nums text-tinta">{pesos(turno.base_efectivo)}</dd>
-          </div>
-          <div className="mt-1 flex justify-between">
-            <dt className="text-piedra">Efectivo cobrado en el turno</dt>
-            <dd className="tabular-nums text-tinta">{pesos(efectivo?.total ?? 0)}</dd>
-          </div>
-          <div className="mt-1 flex justify-between">
-            <dt className="text-piedra">Debería haber en la gaveta</dt>
-            <dd className="tabular-nums text-tinta">{pesos(esperado)}</dd>
-          </div>
-          <div className="mt-2 flex justify-between border-t border-latte pt-2">
-            <dt className="text-piedra">Transferencia cobrada</dt>
-            <dd className="tabular-nums text-tinta">{pesos(esperadoTrans)}</dd>
-          </div>
-          <div className="mt-1 flex justify-between">
-            <dt className="text-piedra">Debería haber en transferencia</dt>
-            <dd className="tabular-nums text-tinta">{pesos(esperadoTrans)}</dd>
-          </div>
-        </dl>
+              <div className="flex flex-col gap-5 px-5 py-5">
+                {/* 1. Lo que se espera */}
+                <section>
+                  <Paso n={1} titulo="Lo que se espera" />
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-linea bg-white">
+                    <FilaEspera etiqueta="Base con la que arrancó" valor={pesos(turno.base_efectivo)} />
+                    <FilaEspera etiqueta="Vendido en efectivo" valor={pesos(efectivo?.total ?? 0)} />
+                    <div className="flex items-center justify-between gap-3 border-t-2 border-espresso bg-latte/30 px-4 py-3">
+                      <p className="font-semibold text-espresso">Gaveta esperada</p>
+                      <p className="text-xl font-extrabold tabular-nums text-espresso">
+                        {pesos(esperado)}
+                      </p>
+                    </div>
+                    <FilaEspera etiqueta="Transferencia esperada" valor={pesos(esperadoTrans)} />
+                    <FilaEspera
+                      etiqueta="Mercado Pago y resto"
+                      valor={pesos((mp?.total ?? 0) + resto.reduce((s, m) => s + m.total, 0))}
+                      atenuado
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-piedra">
+                    Lo que entra por tarjeta o Mercado Pago no deja plata en el local, por eso no
+                    se cuenta.
+                  </p>
+                </section>
 
-        <dl className="mt-2 rounded-xl border border-dashed border-linea p-4 text-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-piedra">
-            No se cuenta (no deja plata en el local)
-          </p>
-          <div className="mt-2 flex justify-between">
-            <dt className="font-medium text-tinta">Mercado Pago</dt>
-            <dd className="tabular-nums text-tinta">{pesos(mp?.total ?? 0)}</dd>
-          </div>
-          {resto.map((m) => (
-            <div key={m.metodo} className="mt-1 flex justify-between">
-              <dt className="text-piedra capitalize">{m.metodo}</dt>
-              <dd className="tabular-nums text-piedra">{pesos(m.total)}</dd>
-            </div>
-          ))}
-        </dl>
+                {/* 2. El conteo */}
+                <section>
+                  <Paso n={2} titulo="Tu conteo" />
+                  <div className="mt-3 flex flex-col gap-4">
+                    <CampoConteo
+                      id="contado"
+                      etiqueta="Efectivo contado"
+                      valor={contado}
+                      onChange={setContado}
+                      placeholder="33000"
+                      autoFocus
+                      diferencia={contado.trim() !== '' && Number.isFinite(numeroContado) ? diferencia : null}
+                    />
+                    <CampoConteo
+                      id="contado-trans"
+                      etiqueta="Transferencia contada"
+                      valor={contadoTrans}
+                      onChange={setContadoTrans}
+                      placeholder={pesos(esperadoTrans)}
+                      diferencia={
+                        contadoTrans.trim() !== '' && Number.isFinite(numeroTrans)
+                          ? diferenciaTrans
+                          : null
+                      }
+                    />
+                    <p className="-mt-1 text-xs text-piedra">
+                      Transferencia puede quedar vacía si se pagó todo en efectivo.
+                    </p>
+                  </div>
+                </section>
 
-        <div className="mt-4">
-          <label htmlFor="perfil-cierre" className="mb-1 block text-sm font-medium text-piedra">
-            ¿Quién cierra?
-          </label>
-          <select
-            id="perfil-cierre"
-            value={elegido?.id ?? ''}
-            onChange={(e) =>
-              setElegido(perfiles.find((p) => String(p.id) === e.target.value))
-            }
-            className={CAMPOS}
-          >
-            {perfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-          {elegido?.id !== turno.usuario_id && (
-            <p className="mt-1 text-xs text-amber-800">
-              El turno abierto es de {turno.usuario}. Solo {turno.usuario} puede cerrarlo.
-            </p>
+                {/* 3. Quién cierra */}
+                <section>
+                  <Paso n={3} titulo="Quién cierra" />
+                  <div className="mt-3 flex items-center gap-3 rounded-2xl border border-linea bg-white px-4 py-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-espresso font-bold text-latte">
+                      {turno.usuario.slice(0, 1)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-tinta">{turno.usuario}</p>
+                      <p className="text-xs text-piedra">
+                        Solo quien abrió el turno puede cerrarlo.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                {descuadre && (
+                  <section>
+                    <label htmlFor="nota" className="mb-1 block text-sm font-medium text-red-800">
+                      Contá por qué no da el conteo <span className="text-red-700">(obligatorio)</span>
+                    </label>
+                    <textarea
+                      id="nota"
+                      value={nota}
+                      onChange={(e) => setNota(e.target.value)}
+                      rows={3}
+                      placeholder="Por ejemplo: se tomó un café sin cobrar"
+                      className={CAMPOS}
+                    />
+                  </section>
+                )}
+
+                {error && <p role="alert" className={ERROR}>{error}</p>}
+              </div>
+
+              {/* Acciones */}
+              <div className="sticky bottom-0 flex gap-3 border-t border-linea bg-hueso px-5 pt-4 pb-2">
+                <button type="button" onClick={onCancelar} className={`${BOTON} flex-1 bg-piedra`}>
+                  Volver
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmar}
+                  disabled={
+                    guardando ||
+                    conteoInvalido(contado) ||
+                    (contadoTrans.trim() !== '' &&
+                      (!Number.isFinite(numeroTrans) || numeroTrans < 0)) ||
+                    (descuadre && nota.trim().length < 3)
+                  }
+                  className={`${BOTON} flex-[2]`}
+                >
+                  {guardando ? 'Cerrando...' : 'Confirmar cierre'}
+                </button>
+              </div>
+            </>
           )}
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="contado" className="mb-1 block text-sm font-medium text-piedra">
-            Efectivo contado
-          </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-piedra">
-              $
-            </span>
-            <input
-              id="contado"
-              value={contado}
-              onChange={(e) => setContado(e.target.value)}
-              inputMode="decimal"
-              autoFocus
-              placeholder="33000"
-              className={`${CAMPOS} pl-7 text-2xl font-bold tabular-nums`}
-            />
-          </div>
-          <p className="mt-1 text-xs text-piedra">
-            Puede ir con punto de miles o con coma: 33.000 y 33,000 valen lo mismo.
-          </p>
-          {contado.trim() !== '' && Number.isFinite(numeroContado) && (
-            <p
-              className={`mt-2 text-sm font-semibold ${
-                diferencia === 0 ? 'text-green-700' : 'text-red-700'
-              }`}
-            >
-              {diferencia === 0
-                ? 'Cuadra con lo esperado'
-                : `Diferencia: ${diferencia > 0 ? 'sobran' : 'faltan'} ${pesos(Math.abs(diferencia))}`}
-            </p>
-          )}
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="contado-trans" className="mb-1 block text-sm font-medium text-piedra">
-            Transferencia contada
-          </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-piedra">
-              $
-            </span>
-            <input
-              id="contado-trans"
-              value={contadoTrans}
-              onChange={(e) => setContadoTrans(e.target.value)}
-              inputMode="decimal"
-              placeholder={pesos(esperadoTrans)}
-              className={`${CAMPOS} pl-7 text-2xl font-bold tabular-nums`}
-            />
-          </div>
-          <p className="mt-1 text-xs text-piedra">
-            Puede quedar vacío si se pagó todo en efectivo.
-          </p>
-          {contadoTrans.trim() !== '' && Number.isFinite(numeroTrans) && (
-            <p
-              className={`mt-2 text-sm font-semibold ${
-                diferenciaTrans === 0 ? 'text-green-700' : 'text-red-700'
-              }`}
-            >
-              {diferenciaTrans === 0
-                ? 'Cuadra con lo esperado'
-                : `Diferencia: ${diferenciaTrans > 0 ? 'sobran' : 'faltan'} ${pesos(Math.abs(diferenciaTrans))}`}
-            </p>
-          )}
-        </div>
-
-        {descuadre && (
-          <div className="mt-4">
-            <label htmlFor="nota" className="mb-1 block text-sm font-medium text-red-800">
-              Contá por qué no da el conteo <span className="text-red-700">(obligatorio)</span>
-            </label>
-            <textarea
-              id="nota"
-              value={nota}
-              onChange={(e) => setNota(e.target.value)}
-              rows={3}
-              placeholder="Por ejemplo: se tomó un café sin cobrar"
-              className={CAMPOS}
-            />
-          </div>
-        )}
-
-        {error && <p role="alert" className={`${ERROR} mt-4`}>{error}</p>}
-
-        <div className="mt-5 flex gap-3">
-          <button type="button" onClick={onCancelar} className={`${BOTON} flex-1 bg-piedra`}>
-            Volver
-          </button>
-          <button
-            type="button"
-            onClick={confirmar}
-            disabled={
-              guardando ||
-              conteoInvalido(contado) ||
-              (contadoTrans.trim() !== '' &&
-                (!Number.isFinite(numeroTrans) || numeroTrans < 0)) ||
-              elegido?.id !== turno.usuario_id ||
-              (descuadre && nota.trim().length < 3)
-            }
-            className={`${BOTON} flex-1`}
-          >
-            {guardando ? 'Cerrando...' : 'Confirmar'}
-          </button>
         </div>
       </div>
     </div>
+  )
+}
+
+// Encabezado de cada paso del cierre
+function Paso({ n, titulo }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-espresso text-sm font-bold text-latte">
+        {n}
+      </span>
+      <h3 className="font-semibold text-tinta">{titulo}</h3>
+    </div>
+  )
+}
+
+function FilaEspera({ etiqueta, valor, atenuado = false }) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 border-b border-linea px-4 py-3 last:border-0 ${
+        atenuado ? 'opacity-70' : ''
+      }`}
+    >
+      <p className="text-sm text-piedra">{etiqueta}</p>
+      <p className="tabular-nums font-semibold text-tinta">{valor}</p>
+    </div>
+  )
+}
+
+// Campo de plata con su estado en vivo: cuadra, faltan o sobran
+function CampoConteo({ id, etiqueta, valor, onChange, placeholder, diferencia, autoFocus = false }) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-piedra">
+        {etiqueta}
+      </label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-piedra">
+          $
+        </span>
+        <input
+          id={id}
+          value={valor}
+          onChange={(e) => onChange(e.target.value)}
+          inputMode="decimal"
+          autoFocus={autoFocus}
+          placeholder={placeholder}
+          className="w-full rounded-2xl border-2 border-linea bg-white py-4 pl-11 pr-4 text-3xl font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+        />
+        {diferencia !== null && (
+          <span
+            className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-3 py-1 text-sm font-bold ${
+              diferencia === 0
+                ? 'bg-emerald-100 text-emerald-800'
+                : 'bg-amber-100 text-amber-800'
+            }`}
+          >
+            {diferencia === 0
+              ? 'Cuadra'
+              : diferencia > 0
+                ? `Sobran ${pesos(Math.abs(diferencia))}`
+                : `Faltan ${pesos(Math.abs(diferencia))}`}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// El resultado queda como está, sin pedir explicación: ya está guardado
+function CierreResultado({ resumen, onListo }) {
+  return (
+    <div className="flex flex-col gap-5 px-5 py-8">
+      <div className="text-center">
+        <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </span>
+        <h2 className="mt-4 text-2xl font-extrabold text-emerald-900">Turno cerrado</h2>
+        <p className="mt-1 text-sm text-piedra">
+          Salida de {resumen.usuario} registrada a las {hora(resumen.cerrado_at)}.
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-linea bg-white">
+        <FilaEspera etiqueta="Base con la que arrancó" valor={pesos(resumen.base_efectivo)} />
+        <FilaEspera etiqueta="Esperado en la gaveta" valor={pesos(resumen.esperado_efectivo)} />
+        <FilaEspera etiqueta="Efectivo contado" valor={pesos(resumen.contado_efectivo)} />
+        <div className="flex items-center justify-between gap-3 border-t-2 border-linea px-4 py-3">
+          <p className="font-semibold text-tinta">Gaveta</p>
+          <p
+            className={`text-xl font-extrabold tabular-nums ${
+              resumen.diferencia === 0 ? 'text-emerald-700' : 'text-rose-700'
+            }`}
+          >
+            {resumen.diferencia === 0 ? 'Cuadró' : pesos(resumen.diferencia)}
+          </p>
+        </div>
+        <FilaEspera etiqueta="Transferencia esperada" valor={pesos(resumen.esperado_transferencia)} />
+        <FilaEspera etiqueta="Transferencia contada" valor={pesos(resumen.contado_transferencia)} />
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <p className="font-semibold text-tinta">Transferencia</p>
+          <p
+            className={`text-lg font-extrabold tabular-nums ${
+              resumen.diferencia_transferencia === 0 ? 'text-emerald-700' : 'text-rose-700'
+            }`}
+          >
+            {resumen.diferencia_transferencia === 0 ? 'Cuadró' : pesos(resumen.diferencia_transferencia)}
+          </p>
+        </div>
+      </div>
+
+      {resumen.nota && (
+        <p className="rounded-xl bg-latte/50 p-3 text-sm text-tinta">
+          <span className="font-semibold">Explicación:</span> {resumen.nota}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={onListo}
+        className={`${BOTON} w-full py-4 text-lg`}
+      >
+        Volver a la caja
+      </button>
+    </div>
+  )
+}
+
+function IconoCerrar() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
   )
 }
 
