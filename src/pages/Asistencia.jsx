@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../useAuth'
 
-// Lo que el admin necesita ver: qué máquinas están autorizadas y las horas de
-// cada empleado. Las horas se sacan de los turnos de caja, no de un fichaje
-// aparte, así que abrir y cerrar caja ya es marcar la entrada y la salida.
+// Lo que el admin necesita ver: los turnos de caja y las horas de cada empleado.
+// Las horas se sacan de los turnos de caja, no de un fichaje aparte, así que
+// abrir y cerrar caja ya es marcar la entrada y la salida.
 
 const ZONA = 'America/Argentina/Buenos_Aires'
 const ar = (opciones) => new Intl.DateTimeFormat('es-AR', { timeZone: ZONA, ...opciones })
@@ -18,8 +18,6 @@ const pesos = (n) =>
 
 const CAMPOS =
   'w-full rounded-xl border border-linea bg-white px-3 py-2.5 focus-visible:outline-2 focus-visible:outline-mocha'
-const BOTON =
-  'rounded-xl bg-espresso px-4 py-3 font-semibold text-latte transition-colors hover:bg-mocha disabled:cursor-not-allowed disabled:opacity-50'
 const TARJETA = 'rounded-2xl border border-linea bg-white p-5'
 const ERROR = 'rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800'
 
@@ -47,7 +45,6 @@ export default function Asistencia() {
       <div className="mb-5 flex gap-1 rounded-xl bg-latte/40 p-1">
         {[
           { id: 'historial', etiqueta: 'Turnos' },
-          { id: 'equipos', etiqueta: 'Equipos' },
           { id: 'horas', etiqueta: 'Horas' },
         ].map((t) => (
           <button
@@ -65,7 +62,6 @@ export default function Asistencia() {
       </div>
 
       {tab === 'historial' && <Historial />}
-      {tab === 'equipos' && <Equipos />}
       {tab === 'horas' && <Horas />}
     </div>
   )
@@ -126,8 +122,7 @@ function Historial() {
                 </div>
 
                 <p className="mt-0.5 text-xs text-piedra">
-                  {diaHora(t.abierto_at)} → {t.cerrado_at ? diaHora(t.cerrado_at) : 'abierto'} ·{' '}
-                  {t.equipo}
+                  {diaHora(t.abierto_at)} → {t.cerrado_at ? diaHora(t.cerrado_at) : 'abierto'}
                 </p>
 
                 {t.cerrado_at && (
@@ -159,134 +154,6 @@ function Historial() {
           </ul>
         )}
       </div>
-    </div>
-  )
-}
-
-// --- Equipos ---
-
-function Equipos() {
-  const [equipos, setEquipos] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState('')
-  const [codigo, setCodigo] = useState(null)
-  const [generando, setGenerando] = useState(false)
-
-  async function cargar() {
-    try {
-      setEquipos(await api('/asistencia/equipos'))
-      setError('')
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setCargando(false)
-    }
-  }
-
-  useEffect(() => {
-    let vivo = true
-    ;(async () => {
-      try {
-        const lista = await api('/asistencia/equipos')
-        if (vivo) {
-          setEquipos(lista)
-          setError('')
-        }
-      } catch (e) {
-        if (vivo) setError(e.message)
-      } finally {
-        if (vivo) setCargando(false)
-      }
-    })()
-    return () => {
-      vivo = false
-    }
-  }, [])
-
-  async function generar() {
-    setGenerando(true)
-    setError('')
-    try {
-      setCodigo(await api('/asistencia/equipos/codigo', { metodo: 'POST' }))
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setGenerando(false)
-    }
-  }
-
-  async function darDeBaja(id) {
-    if (!confirm('¿Dar de baja esta máquina? No va a poder abrir ni cerrar caja.')) return
-    try {
-      await api(`/asistencia/equipos/${id}`, { metodo: 'DELETE' })
-      await cargar()
-    } catch (e) {
-      setError(e.message)
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className={TARJETA}>
-        <h2 className="font-semibold text-espresso">Vincular una máquina</h2>
-        <p className="mt-1 text-sm text-piedra">
-          Generá un código y usalo en la computadora del mostrador. Vence a los 10 minutos y sirve
-          una sola vez. Solo las máquinas vinculadas pueden abrir y cerrar caja.
-        </p>
-        {codigo ? (
-          <div className="mt-3 rounded-xl bg-latte/40 p-4 text-center">
-            <p className="text-xs text-piedra">Código (vence en 10 minutos)</p>
-            <p className="text-3xl font-extrabold uppercase tracking-[0.3em] text-espresso">
-              {codigo.codigo}
-            </p>
-          </div>
-        ) : (
-          <button type="button" onClick={generar} disabled={generando} className={`${BOTON} mt-3`}>
-            {generando ? 'Generando...' : 'Generar código'}
-          </button>
-        )}
-      </div>
-
-      <div className={TARJETA}>
-        <h2 className="mb-3 font-semibold text-espresso">Máquinas autorizadas</h2>
-        {cargando ? (
-          <p className="text-sm text-piedra">Cargando...</p>
-        ) : equipos.length === 0 ? (
-          <p className="text-sm text-piedra">
-            Todavía no hay ninguna máquina vinculada. Generá un código arriba.
-          </p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-linea">
-            {equipos.map((eq) => (
-              <li key={eq.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-tinta">
-                    {eq.nombre}
-                    {!eq.activo && (
-                      <span className="ml-2 text-xs font-normal text-red-700">(de baja)</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-piedra">
-                    {eq.turnos} {eq.turnos === 1 ? 'turno' : 'turnos'} ·{' '}
-                    {eq.ultima_conexion ? `última: ${diaHora(eq.ultima_conexion)}` : 'nunca usada'}
-                  </p>
-                </div>
-                {eq.activo && (
-                  <button
-                    type="button"
-                    onClick={() => darDeBaja(eq.id)}
-                    className="shrink-0 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
-                  >
-                    Dar de baja
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {error && <p role="alert" className={ERROR}>{error}</p>}
     </div>
   )
 }

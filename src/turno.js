@@ -1,23 +1,13 @@
 import { create } from 'zustand'
 import { api } from './api'
-import { firmar, mensajeAsistencia, leerEquipo } from './equipo'
 
 // El turno de caja es el corazón del mostrador: quién atiende, cuánto vendió y
 // cómo cerró la gaveta. Vive en un store para que el Inicio, el menú lateral y la
 // pantalla de caja muestren siempre lo mismo sin volver a pegarle a la API.
 //
-// Abrir y cerrar exigen la firma de la máquina del local, así que el teléfono de
-// cualquiera no sirve para marcar.
-
-const mensaje = (equipoId, usuarioId, nonce, tipo) =>
-  mensajeAsistencia({ nonce, equipoId, usuarioId, tipo })
-
-// El nonce se pide, se firma y se usa enseguida. Si algo falla hay que pedir
-// uno nuevo, porque cada desafío se gasta al usarlo.
-async function pedirFirma(equipoId, usuarioId, tipo) {
-  const { nonce } = await api('/asistencia/desafio', { metodo: 'POST' })
-  return { nonce, firma: await firmar(mensaje(equipoId, usuarioId, nonce, tipo)) }
-}
+// Hay una sola computadora que abre y cierra la caja (la del mostrador) y va
+// con la sesión abierta, así que no hace falta firmar nada por máquina: alcanza
+// el login en esa PC.
 
 export const useTurno = create((set, get) => ({
   turno: null,
@@ -41,17 +31,11 @@ export const useTurno = create((set, get) => ({
   },
 
   async abrir(usuarioId, baseEfectivo) {
-    const equipo = await leerEquipo()
-    if (!equipo?.equipoId) throw new Error('Esta máquina todavía no está vinculada')
-    const { nonce, firma } = await pedirFirma(equipo.equipoId, usuarioId, 'entrada')
     const r = await api('/turnos/abrir', {
       metodo: 'POST',
       cuerpo: {
         usuario_id: usuarioId,
-        equipo_id: equipo.equipoId,
         base_efectivo: baseEfectivo,
-        nonce,
-        firma,
       },
     })
     set({ turno: r.turno })
@@ -59,19 +43,13 @@ export const useTurno = create((set, get) => ({
   },
 
   async cerrar(usuarioId, contadoEfectivo, contadoTransferencia, nota) {
-    const equipo = await leerEquipo()
-    if (!equipo?.equipoId) throw new Error('Esta máquina todavía no está vinculada')
-    const { nonce, firma } = await pedirFirma(equipo.equipoId, usuarioId, 'salida')
     const r = await api('/turnos/cerrar', {
       metodo: 'POST',
       cuerpo: {
         usuario_id: usuarioId,
-        equipo_id: equipo.equipoId,
         contado_efectivo: contadoEfectivo,
         contado_transferencia: contadoTransferencia,
         nota,
-        nonce,
-        firma,
       },
     })
     set({ turno: null })

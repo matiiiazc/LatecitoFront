@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
-import { api } from '../api'
 import { useTurno } from '../turno'
-import { disponible, crearClaves, leerEquipo, vincularEquipo } from '../equipo'
 
 // Pantalla del mostrador. Dos estados: no hay turno abierto y se elige perfil,
 // o hay turno abierto y se ve quién atiende y cuánto va.
 //
-// Elegir perfil no pide contraseña. La máquina ya está autorizada por el
-// administrador, así que el nombre es una declaración de la persona, no una
-// prueba de identidad. Para que el nombre no se pueda cambiar desde cualquier
-// otra computadora, abrir y cerrar exigen la firma de esta máquina.
+// Elegir perfil no pide contraseña: es una declaración de la persona, no una
+// prueba de identidad. Solo la computadora del mostrador (con su sesión
+// abierta) llega a esta pantalla.
 
 const ZONA = 'America/Argentina/Buenos_Aires'
 const ar = (opciones) => new Intl.DateTimeFormat('es-AR', { timeZone: ZONA, ...opciones })
@@ -47,28 +44,10 @@ const ERROR = 'rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800'
 
 export default function TurnoCaja() {
   const { turno, perfiles, cargando, cargado, cargar, cargarPerfiles } = useTurno()
-  const [equipo, setEquipo] = useState(null)
-  const [revisando, setRevisando] = useState(true)
 
   useEffect(() => {
-    let vivo = true
-    ;(async () => {
-      if (!disponible()) {
-        if (vivo) setRevisando(false)
-        return
-      }
-      const guardado = await leerEquipo()
-      if (!vivo) return
-      setEquipo(guardado)
-      setRevisando(false)
-      if (guardado) {
-        await cargar()
-        await cargarPerfiles()
-      }
-    })()
-    return () => {
-      vivo = false
-    }
+    cargar()
+    cargarPerfiles()
   }, [cargar, cargarPerfiles])
 
   // Se refresca el turno al volver a esta pantalla, para que muestre lo que
@@ -77,29 +56,14 @@ export default function TurnoCaja() {
     if (cargado) cargar()
   }, [cargado, cargar])
 
-  if (revisando) return <p className="text-piedra">Revisando la máquina...</p>
-
-  if (!disponible()) {
-    return (
-      <div className={`${TARJETA} border-amber-300 bg-amber-50 text-amber-900`}>
-        <p className="font-semibold">Este navegador no sirve para el mostrador</p>
-        <p className="mt-1 text-sm">
-          La firma de la máquina necesita WebCrypto y una dirección segura (localhost o https).
-        </p>
-      </div>
-    )
-  }
-
-  if (!equipo) return <VincularEquipo onListo={setEquipo} />
-
-  if (!turno) return <AbrirTurno perfiles={perfiles} cargando={cargando} equipo={equipo} />
+  if (!turno) return <AbrirTurno perfiles={perfiles} cargando={cargando} />
 
   return <TurnoAbierto turno={turno} perfiles={perfiles} />
 }
 
 // --- Abrir el turno: elegir perfil y contar la base ---
 
-function AbrirTurno({ perfiles, cargando, equipo }) {
+function AbrirTurno({ perfiles, cargando }) {
   const abrir = useTurno((s) => s.abrir)
   const [elegido, setElegido] = useState(null)
   const [base, setBase] = useState('')
@@ -191,7 +155,6 @@ function AbrirTurno({ perfiles, cargando, equipo }) {
       )}
 
       {cargando && <p className="text-center text-xs text-piedra">Actualizando...</p>}
-      <p className="text-center text-xs text-piedra">Máquina: {equipo.nombre}</p>
     </div>
   )
 }
@@ -580,76 +543,4 @@ function conteoInvalido(contado) {
   if (String(contado).trim() === '') return true
   const n = aNumeroPlata(contado)
   return !Number.isFinite(n) || n < 0
-}
-
-// --- Vincular la máquina (la hace el admin una vez por computadora) ---
-
-function VincularEquipo({ onListo }) {
-  const [codigo, setCodigo] = useState('')
-  const [nombre, setNombre] = useState('Caja del local')
-  const [error, setError] = useState('')
-  const [creando, setCreando] = useState(false)
-
-  async function vincular(e) {
-    e.preventDefault()
-    setCreando(true)
-    setError('')
-    try {
-      const { clavePrivada, publicaB64 } = await crearClaves()
-      const r = await api('/asistencia/equipos', {
-        metodo: 'POST',
-        cuerpo: { codigo: codigo.trim().toUpperCase(), nombre: nombre.trim(), public_key: publicaB64 },
-      })
-      await vincularEquipo({ equipoId: r.id, nombre: r.nombre, clavePrivada, publicaB64 })
-      onListo({ equipoId: r.id, nombre: r.nombre })
-    } catch (e2) {
-      setError(e2.message)
-    } finally {
-      setCreando(false)
-    }
-  }
-
-  return (
-    <form onSubmit={vincular} className={`${TARJETA} flex flex-col gap-4`}>
-      <div>
-        <h2 className="font-semibold text-espresso">Vincular esta máquina</h2>
-        <p className="mt-1 text-sm text-piedra">
-          Esta computadora todavía no está autorizada. Pedile al administrador un código y ponelo
-          acá. Se hace una sola vez por máquina.
-        </p>
-      </div>
-
-      <div>
-        <label htmlFor="eq-codigo" className="mb-1 block text-sm font-medium text-piedra">
-          Código del administrador
-        </label>
-        <input
-          id="eq-codigo"
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value)}
-          autoComplete="off"
-          className={`${CAMPOS} text-center text-lg font-bold uppercase tracking-[0.3em]`}
-          placeholder="XXXXXXXX"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="eq-nombre" className="mb-1 block text-sm font-medium text-piedra">
-          Nombre del equipo
-        </label>
-        <input
-          id="eq-nombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          className={CAMPOS}
-        />
-      </div>
-
-      {error && <p role="alert" className={ERROR}>{error}</p>}
-
-      <button type="submit" disabled={creando || !codigo.trim()} className={BOTON}>
-        {creando ? 'Vinculando...' : 'Vincular esta máquina'}
-      </button>
-    </form>
-  )
 }
