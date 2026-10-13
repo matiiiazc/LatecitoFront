@@ -1,6 +1,6 @@
-// imprimir-ticket.js
+// imprimirTicket.js
 // Imprime la comanda de LATTECITO en una térmica de 80 mm con window.print().
-// Uso: imprimirTicket({ id: 123, items: [{ nombre: "Latte", cant: 2, precio: 3000 }] });
+// Uso: imprimirTicket({ id: 123, total: 6000, items: [{ nombre: "Latte", cantidad: 2, subtotal: 6000 }] });
 
 const dinero = (n) => "$" + Number(n).toLocaleString("es-AR");
 
@@ -10,14 +10,14 @@ const escapar = (t) =>
   }[c]));
 
 function htmlTicket({ id, items }) {
-  const total = items.reduce((s, i) => s + i.cant * i.precio, 0);
+  const total = items.reduce((s, i) => s + i.subtotal, 0);
 
   const filas = items
     .map(
       (i) => `
       <div class="fila">
-        <span class="prod">${i.cant}x ${escapar(i.nombre)}</span>
-        <span class="monto">${dinero(i.cant * i.precio)}</span>
+        <span class="prod">${i.cantidad}x ${escapar(i.nombre)}</span>
+        <span class="monto">${dinero(i.subtotal)}</span>
       </div>`
     )
     .join("");
@@ -66,7 +66,7 @@ function htmlTicket({ id, items }) {
 </html>`;
 }
 
-function imprimirTicket(datos) {
+export function imprimirTicket(datos) {
   // Iframe oculto: no abre pestañas ni pisa la pantalla de la app
   const iframe = document.createElement("iframe");
   iframe.style.cssText =

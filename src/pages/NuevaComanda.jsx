@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import Cobrar from '../components/Cobrar'
+import { imprimirTicket } from '../utils/imprimirTicket'
 
 const dinero = (n) => `$${Math.round(n).toLocaleString('es-AR')}`
 
@@ -29,7 +30,6 @@ export default function NuevaComanda({ tab = 'nueva', onTab = () => {} }) {
   const [enviando, setEnviando] = useState(false)
   const [errorCobro, setErrorCobro] = useState('')
   const [hecha, setHecha] = useState(null)
-  const [imprimiendoJob, setImprimiendoJob] = useState(false)
   const [avisoPrint, setAvisoPrint] = useState(null)
 
   // Comandas en curso
@@ -44,7 +44,6 @@ export default function NuevaComanda({ tab = 'nueva', onTab = () => {} }) {
   const [motivo, setMotivo] = useState('')
   const [errorAnular, setErrorAnular] = useState('')
   const [anulandoCargando, setAnulandoCargando] = useState(false)
-  const [reimprimiendo, setReimprimiendo] = useState(null)
 
   // Las comandas en curso se listan siempre: el contador del toggle tiene que
   // estar al día aunque el cajero esté armando otra comanda.
@@ -158,22 +157,10 @@ export default function NuevaComanda({ tab = 'nueva', onTab = () => {} }) {
     setAvisoPrint(null)
   }
 
-  // Crea un print job en el backend. La web NO accede a la impresora:
-  // el agente local (USB) es quien después baja el job e imprime.
-  async function imprimirComanda() {
-    setImprimiendoJob(true)
-    setAvisoPrint(null)
-    try {
-      const job = await api('/print-jobs', {
-        metodo: 'POST',
-        cuerpo: { comanda_id: hecha.id },
-      })
-      setAvisoPrint({ tono: 'ok', texto: `Comanda enviada a imprimir (job #${job.id}).` })
-    } catch (e) {
-      setAvisoPrint({ tono: 'error', texto: e.message })
-    } finally {
-      setImprimiendoJob(false)
-    }
+  // Imprime la comanda directo en la térmica desde el navegador.
+  function imprimirComanda() {
+    imprimirTicket(hecha)
+    setAvisoPrint({ tono: 'ok', texto: 'Comanda enviada a la impresora.' })
   }
 
   const cuerpoItems = () =>
@@ -241,20 +228,9 @@ async function guardarEnCurso() {
     }
   }
 
-  async function imprimir(comanda) {
-    setReimprimiendo(comanda.id)
-    setAvisoPrint(null)
-    try {
-      const job = await api('/print-jobs', {
-        metodo: 'POST',
-        cuerpo: { comanda_id: comanda.id },
-      })
-      setAvisoPrint({ tono: 'ok', texto: `Comanda #${comanda.id} enviada a imprimir (job #${job.id}).` })
-    } catch (e) {
-      setAvisoPrint({ tono: 'error', texto: e.message })
-    } finally {
-      setReimprimiendo(null)
-    }
+  function imprimir(comanda) {
+    imprimirTicket(comanda)
+    setAvisoPrint({ tono: 'ok', texto: `Comanda #${comanda.id} enviada a la impresora.` })
   }
 
   if (cargando) {
@@ -326,10 +302,9 @@ async function guardarEnCurso() {
             <button
               type="button"
               onClick={imprimirComanda}
-              disabled={imprimiendoJob}
-              className="flex-1 rounded-xl bg-espresso px-4 py-3 text-lg font-semibold text-latte transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha disabled:opacity-60"
+              className="flex-1 rounded-xl bg-espresso px-4 py-3 text-lg font-semibold text-latte transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
             >
-              {imprimiendoJob ? 'Enviando...' : 'Imprimir comanda'}
+              Imprimir comanda
             </button>
             <button
               type="button"
@@ -457,10 +432,9 @@ async function guardarEnCurso() {
                     <button
                       type="button"
                       onClick={() => imprimir(c)}
-                      disabled={reimprimiendo === c.id}
-                      className="rounded-xl border border-linea px-3 py-2 text-sm font-semibold text-mocha hover:bg-latte/40 disabled:opacity-40"
+                      className="rounded-xl border border-linea px-3 py-2 text-sm font-semibold text-mocha hover:bg-latte/40"
                     >
-                      {reimprimiendo === c.id ? 'Enviando...' : 'Imprimir'}
+                      Imprimir
                     </button>
                     <button
                       type="button"
