@@ -5,7 +5,14 @@ import { imprimirTexto, ANCHO, centrar, alineado, recortar } from "./imprimir";
 
 const dinero = (n) => "$" + Number(n).toLocaleString("es-AR");
 
-function textoTicket({ id, items, created_at, atendio }) {
+const METODO = {
+  efectivo: "Efectivo",
+  tarjeta: "Tarjeta",
+  transferencia: "Transferencia",
+  mercadopago: "MercadoPago",
+};
+
+function textoTicket({ id, items, created_at, atendio, metodo_pago }) {
   const total = items.reduce((s, i) => s + i.subtotal, 0);
 
   const cuando = created_at ? new Date(created_at) : new Date();
@@ -30,6 +37,9 @@ function textoTicket({ id, items, created_at, atendio }) {
     ...filas,
     "-".repeat(ANCHO),
     alineado("TOTAL", dinero(total)),
+    ...(metodo_pago
+      ? [alineado("Pago", METODO[metodo_pago] ?? metodo_pago)]
+      : []),
     "=".repeat(ANCHO),
     "",
     "",
