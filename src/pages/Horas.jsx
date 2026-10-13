@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { imprimirTexto, ANCHO, centrar, alineado } from '../utils/imprimir'
 
 // Cotización de horas de trabajo. Las horas salen de los turnos de caja ya
 // cerrados (de abrir a cerrar) y cada turno se redondea SIEMPRE para arriba a
@@ -60,6 +61,38 @@ export default function Horas() {
 
   function alternar(id) {
     setSeleccion((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
+  }
+
+  // Arma el resumen como texto monoespaciado para la térmica
+  function imprimirResumen() {
+    const sep = '='.repeat(ANCHO)
+    const lin = '-'.repeat(ANCHO)
+    const lineas = []
+
+    lineas.push(sep)
+    lineas.push(centrar('LATTECITO'))
+    lineas.push(centrar('HORAS DE TRABAJO'))
+    lineas.push(sep)
+    lineas.push(alineado('Fecha', new Date().toLocaleDateString('es-AR')))
+    lineas.push(lin)
+    if (elegidos.length === 0) {
+      lineas.push('Sin empleados seleccionados')
+    } else {
+      for (const e of elegidos) {
+        const detalle = precioValido ? `${e.horas} h x ${pesos(precioNum)}` : `${e.horas} h`
+        const monto = precioValido ? pesos(e.horas * precioNum) : ''
+        lineas.push(alineado(`${e.nombre}  ${detalle}`, monto))
+      }
+    }
+    lineas.push(lin)
+    lineas.push(
+      alineado(`TOTAL ${horasTotales} h`, precioValido ? pesos(total) : '(sin precio)')
+    )
+    lineas.push(sep)
+    lineas.push('')
+    lineas.push('')
+
+    imprimirTexto(lineas.join('\n'))
   }
 
   if (cargando) return <p className="text-piedra">Cargando...</p>
@@ -154,6 +187,14 @@ export default function Horas() {
               )}
             </span>
           </div>
+
+          <button
+            type="button"
+            onClick={imprimirResumen}
+            className="mt-4 w-full rounded-xl bg-espresso px-4 py-3 font-semibold text-latte transition-colors hover:bg-mocha"
+          >
+            Imprimir resumen
+          </button>
         </div>
       )}
     </div>

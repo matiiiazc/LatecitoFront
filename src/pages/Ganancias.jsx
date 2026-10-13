@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../useAuth'
+import { imprimirTexto, ANCHO, centrar, alineado } from '../utils/imprimir'
 
 const dinero = (n) => `$${Math.round(Number(n) || 0).toLocaleString('es-AR')}`
 
@@ -169,6 +170,78 @@ export default function Ganancias() {
   const maxIng = Math.max(1, ...(resumen?.dias ?? []).map((d) => d.ingresos))
   const maxGas = Math.max(1, ...(resumen?.dias ?? []).map((d) => d.gastos))
 
+  // Arma el resumen como texto monoespaciado para la térmica
+  function imprimirResumen() {
+    if (!resumen) return
+    const sep = '='.repeat(ANCHO)
+    const lin = '-'.repeat(ANCHO)
+    const lineas = []
+
+    lineas.push(sep)
+    lineas.push(centrar('LATTECITO'))
+    lineas.push(centrar('GANANCIAS Y GASTOS'))
+    lineas.push(sep)
+    lineas.push(`Desde: ${resumen.desde}  Hasta: ${resumen.hasta}`)
+    lineas.push(lin)
+    lineas.push(alineado('Ingresos', dinero(t.ingresos)))
+    lineas.push(alineado('Gastos', dinero(t.gastos)))
+    lineas.push(alineado('Resultado', dinero(t.resultado)))
+    lineas.push(lin)
+    lineas.push(alineado(`${t.comandas} comandas`, `Ticket prom ${dinero(t.ticket_promedio)}`))
+    lineas.push(alineado(`${t.anuladas} anuladas`, `${t.cantidad_gastos} gastos`))
+    if (resumen.desde !== resumen.hasta) {
+      lineas.push(alineado('Margen por dia', dinero(t.margen_diario)))
+    }
+
+    lineas.push(sep)
+    lineas.push(centrar('INGRESOS POR FORMA DE PAGO'))
+    lineas.push(lin)
+    if (resumen.por_metodo.length === 0) {
+      lineas.push('Sin ventas cobradas')
+    } else {
+      for (const m of resumen.por_metodo) {
+        lineas.push(alineado(`${METODO[m.metodo] ?? m.metodo} (${m.comandas})`, dinero(m.ingresos)))
+      }
+    }
+
+    lineas.push(sep)
+    lineas.push(centrar('GASTOS POR CATEGORIA'))
+    lineas.push(lin)
+    if (resumen.por_categoria.length === 0) {
+      lineas.push('Sin gastos cargados')
+    } else {
+      for (const g of resumen.por_categoria) {
+        lineas.push(
+          alineado(`${ETIQUETA_CATEGORIA[g.categoria] ?? g.categoria} (${g.cantidad})`, dinero(g.gastos))
+        )
+      }
+    }
+
+    const conMovimiento = resumen.dias.filter((d) => d.ingresos > 0 || d.gastos > 0)
+    lineas.push(sep)
+    lineas.push(centrar('DETALLE POR DIA'))
+    lineas.push(lin)
+    if (conMovimiento.length === 0) {
+      lineas.push('Sin movimientos en el periodo')
+    } else {
+      for (const d of conMovimiento) {
+        const etiqueta = new Date(`${d.dia}T12:00:00`).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+        })
+        lineas.push(
+          `${etiqueta}  +${dinero(d.ingresos)}  -${dinero(d.gastos)}  =${dinero(d.resultado)}`
+        )
+      }
+    }
+
+    lineas.push(sep)
+    lineas.push('')
+    lineas.push('')
+
+    imprimirTexto(lineas.join('\n'))
+  }
+
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6 md:p-10">
       <h1 className="text-3xl font-bold text-mocha">Ganancias y gastos</h1>
@@ -221,6 +294,14 @@ export default function Ganancias() {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={imprimirResumen}
+          disabled={!t}
+          className="rounded-xl bg-espresso px-3 py-2 text-sm font-semibold text-latte hover:bg-mocha disabled:opacity-40"
+        >
+          Imprimir resumen
+        </button>
       </div>
 
       {error && (
