@@ -26,7 +26,12 @@ const alineado = (izq, der) => {
   return hueco > 0 ? i + " ".repeat(hueco) + d : `${i} ${d}`;
 };
 
-function textoTicket({ id, items, created_at }) {
+const recortar = (t) => {
+  const s = String(t);
+  return s.length > ANCHO ? s.slice(0, ANCHO) : s;
+};
+
+function textoTicket({ id, items, created_at, atendio }) {
   const total = items.reduce((s, i) => s + i.subtotal, 0);
 
   const cuando = created_at ? new Date(created_at) : new Date();
@@ -46,6 +51,7 @@ function textoTicket({ id, items, created_at }) {
     centrar("LATTECITO"),
     centrar(`N° ${id} TICKET`),
     alineado(`Fecha: ${fecha}`, `Hora: ${hora}`),
+    ...(atendio ? [recortar(`Atendió: ${atendio}`)] : []),
     "=".repeat(ANCHO),
     ...filas,
     "-".repeat(ANCHO),
