@@ -9,7 +9,6 @@ const METODO = {
   efectivo: 'Efectivo',
   tarjeta: 'Tarjeta',
   transferencia: 'Transferencia',
-  mercadopago: 'MercadoPago',
 }
 
 function urlComandasDeHoy() {

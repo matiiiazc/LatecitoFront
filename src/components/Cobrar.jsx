@@ -6,7 +6,6 @@ const METODOS = [
   { id: 'efectivo', etiqueta: 'Efectivo' },
   { id: 'tarjeta', etiqueta: 'Tarjeta' },
   { id: 'transferencia', etiqueta: 'Transferencia' },
-  { id: 'mercadopago', etiqueta: 'MercadoPago' },
 ]
 
 const CAMPO =

@@ -183,10 +183,9 @@ function TurnoAbierto({ turno }) {
   const [cerrando, setCerrando] = useState(false)
 
   const efectivo = turno.por_metodo.find((m) => m.metodo === 'efectivo')
-  const mp = turno.por_metodo.find((m) => m.metodo === 'mercadopago')
   const transferencia = turno.por_metodo.find((m) => m.metodo === 'transferencia')
   const otros = turno.por_metodo.filter(
-    (m) => m.metodo !== 'efectivo' && m.metodo !== 'mercadopago' && m.metodo !== 'transferencia',
+    (m) => m.metodo !== 'efectivo' && m.metodo !== 'transferencia',
   )
 
   return (
@@ -251,12 +250,6 @@ function TurnoAbierto({ turno }) {
             detalle="Se concilia aparte"
             total={transferencia?.total ?? 0}
             destacado="text-espresso"
-          />
-          <FilaCobro
-            etiqueta="Mercado Pago"
-            detalle="No deja plata en el local"
-            total={mp?.total ?? 0}
-            atenuado
           />
           {otros.map((m) => (
             <FilaCobro
@@ -329,14 +322,13 @@ function CerrarCaja({ turno, onCancelar }) {
 
   const efectivo = turno.por_metodo.find((m) => m.metodo === 'efectivo')
   const transferencia = turno.por_metodo.find((m) => m.metodo === 'transferencia')
-  const mp = turno.por_metodo.find((m) => m.metodo === 'mercadopago')
   const resto = turno.por_metodo.filter(
-    (m) => m.metodo !== 'efectivo' && m.metodo !== 'transferencia' && m.metodo !== 'mercadopago',
+    (m) => m.metodo !== 'efectivo' && m.metodo !== 'transferencia',
   )
 
   // La gaveta debería tener la base más lo cobrado en efectivo. Las
-  // transferencias se concilian aparte. El resto (tarjeta, Mercado Pago) se
-  // muestra pero no se cuenta.
+  // transferencias se concilian aparte. El resto (tarjeta) se muestra pero no
+  // se cuenta.
   const esperado = turno.base_efectivo + (efectivo?.total ?? 0)
   const esperadoTrans = transferencia?.total ?? 0
   const numeroContado = aNumeroPlata(contado)
@@ -417,14 +409,13 @@ function CerrarCaja({ turno, onCancelar }) {
                     </div>
                     <FilaEspera etiqueta="Transferencia esperada" valor={pesos(esperadoTrans)} />
                     <FilaEspera
-                      etiqueta="Mercado Pago y resto"
-                      valor={pesos((mp?.total ?? 0) + resto.reduce((s, m) => s + m.total, 0))}
+                      etiqueta="Tarjeta y resto"
+                      valor={pesos(resto.reduce((s, m) => s + m.total, 0))}
                       atenuado
                     />
                   </div>
                   <p className="mt-2 text-xs text-piedra">
-                    Lo que entra por tarjeta o Mercado Pago no deja plata en el local, por eso no
-                    se cuenta.
+                    Lo que entra por tarjeta no deja plata en el local, por eso no se cuenta.
                   </p>
                 </section>
 
