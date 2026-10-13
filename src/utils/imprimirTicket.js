@@ -2,6 +2,10 @@
 // Imprime la comanda de LATTECITO en una térmica de 80 mm con window.print().
 // Uso: imprimirTicket({ id: 123, total: 6000, items: [{ nombre: "Latte", cantidad: 2, subtotal: 6000 }] });
 
+// Caracteres por línea (Font A en 80 mm). Si el papel corta las líneas, bajá
+// este número; si sobra mucho espacio a la derecha, subilo.
+const ANCHO = 48;
+
 const dinero = (n) => "$" + Number(n).toLocaleString("es-AR");
 
 const escapar = (t) =>
@@ -9,29 +13,49 @@ const escapar = (t) =>
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 
-function htmlTicket({ id, items }) {
+const centrar = (t) => {
+  const s = String(t);
+  if (s.length >= ANCHO) return s;
+  return " ".repeat(Math.floor((ANCHO - s.length) / 2)) + s;
+};
+
+const alineado = (izq, der) => {
+  const i = String(izq);
+  const d = String(der);
+  const hueco = ANCHO - i.length - d.length;
+  return hueco > 0 ? i + " ".repeat(hueco) + d : `${i} ${d}`;
+};
+
+function textoTicket({ id, items }) {
   const total = items.reduce((s, i) => s + i.subtotal, 0);
 
-  const filas = items
-    .map(
-      (i) => `
-      <div class="fila">
-        <span class="prod">${i.cantidad}x ${escapar(i.nombre)}</span>
-        <span class="monto">${dinero(i.subtotal)}</span>
-      </div>`
-    )
-    .join("");
+  const filas = items.map((i) =>
+    alineado(`${i.cantidad ?? 1}x ${i.nombre}`, dinero(i.subtotal))
+  );
 
+  return [
+    "=".repeat(ANCHO),
+    centrar("LATTECITO"),
+    centrar(`N° ${id} TICKET`),
+    "=".repeat(ANCHO),
+    ...filas,
+    "-".repeat(ANCHO),
+    alineado("TOTAL", dinero(total)),
+    "=".repeat(ANCHO),
+    "",
+    "",
+  ].join("\n");
+}
+
+function htmlTicket(datos) {
   return `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Ticket ${escapar(id)}</title>
+<title>Ticket ${escapar(datos.id)}</title>
 <style>
   /* 80 mm de ancho, alto automático, sin márgenes de página */
   @page { size: 80mm auto; margin: 0; }
-
-  * { box-sizing: border-box; }
 
   html, body { margin: 0; padding: 0; }
 
@@ -39,29 +63,20 @@ function htmlTicket({ id, items }) {
     width: 72mm;                 /* área imprimible real de una térmica de 80 mm */
     margin: 0 auto;
     padding: 2mm 0 6mm;
-    font-family: "Courier New", Consolas, monospace;
-    font-size: 13px;
-    line-height: 1.3;
-    color: #000;
   }
 
-  .sep    { border-top: 2px dashed #000; margin: 3mm 0; }
-  .centro { text-align: center; }
-  .marca  { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-  .fila   { display: flex; justify-content: space-between; gap: 6px; }
-  .prod   { flex: 1; overflow-wrap: anywhere; }
-  .monto  { white-space: nowrap; }
-  .total  { font-size: 16px; font-weight: bold; }
+  pre {
+    margin: 0;
+    font-family: "Courier New", Consolas, monospace;
+    font-size: 9px;
+    line-height: 1.25;
+    white-space: pre;
+    color: #000;
+  }
 </style>
 </head>
 <body>
-  <div class="sep"></div>
-  <div class="centro marca">LATTECITO</div>
-  <div class="centro">N° ${escapar(id)} TICKET</div>
-  <div class="sep"></div>
-  ${filas}
-  <div class="sep"></div>
-  <div class="fila total"><span>Total:</span><span>${dinero(total)}</span></div>
+<pre>${escapar(textoTicket(datos))}</pre>
 </body>
 </html>`;
 }
