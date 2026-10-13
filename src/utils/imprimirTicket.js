@@ -26,8 +26,16 @@ const alineado = (izq, der) => {
   return hueco > 0 ? i + " ".repeat(hueco) + d : `${i} ${d}`;
 };
 
-function textoTicket({ id, items }) {
+function textoTicket({ id, items, created_at }) {
   const total = items.reduce((s, i) => s + i.subtotal, 0);
+
+  const cuando = created_at ? new Date(created_at) : new Date();
+  const fecha = cuando.toLocaleDateString("es-AR");
+  const hora = cuando.toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
   const filas = items.map((i) =>
     alineado(`${i.cantidad ?? 1}x ${i.nombre}`, dinero(i.subtotal))
@@ -37,6 +45,7 @@ function textoTicket({ id, items }) {
     "=".repeat(ANCHO),
     centrar("LATTECITO"),
     centrar(`N° ${id} TICKET`),
+    alineado(`Fecha: ${fecha}`, `Hora: ${hora}`),
     "=".repeat(ANCHO),
     ...filas,
     "-".repeat(ANCHO),
