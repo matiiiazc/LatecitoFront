@@ -11,7 +11,6 @@ import Ganancias from './pages/Ganancias'
 import Asistencia from './pages/Asistencia'
 import TurnoCaja from './pages/TurnoCaja'
 import Horas from './pages/Horas'
-import Mesas from './pages/Mesas'
 import { useAuth } from './useAuth'
 import PantallaError from './components/PantallaError'
 
@@ -19,7 +18,6 @@ const VISTAS = [
   'inicio',
   'turno',
   'nueva',
-  'mesas',
   'stock',
   'productos',
   'resumenes',
@@ -90,7 +88,6 @@ export default function App() {
         )}
         {vista === 'turno' && <TurnoCaja />}
         {vista === 'nueva' && <NuevaComanda tab={tabComanda} onTab={setTabComanda} />}
-        {vista === 'mesas' && <Mesas />}
         {vista === 'stock' && <Stock />}
         {vista === 'productos' && <Productos />}
         {vista === 'resumenes' && <Resumenes />}
