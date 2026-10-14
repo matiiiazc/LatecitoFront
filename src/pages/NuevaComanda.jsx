@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import Cobrar from '../components/Cobrar'
 import { imprimirTicket } from '../utils/imprimirTicket'
+import { etiquetaPago } from '../utils/pago'
 
 const dinero = (n) => `$${Math.round(n).toLocaleString('es-AR')}`
 
@@ -192,13 +193,13 @@ async function guardarEnCurso() {
     }
   }
 
-  async function cobrarEnCurso(comanda, metodo) {
+  async function cobrarEnCurso(comanda, pago) {
     setEnviando(true)
     setErrorCobro('')
     try {
       const cobrada = await api(`/comandas/${comanda.id}/cobrar`, {
         metodo: 'POST',
-        cuerpo: { metodo_pago: metodo },
+        cuerpo: pago,
       })
       setCobrando(null)
       setHecha(cobrada)
@@ -254,7 +255,7 @@ async function guardarEnCurso() {
             Comanda #{hecha.id} cobrada
           </h1>
           <p className="mt-1 text-piedra">
-            {hecha.tipo === 'mesa' ? `Mesa ${hecha.mesa}` : 'Mostrador'} · {hecha.metodo_pago}
+            {hecha.tipo === 'mesa' ? `Mesa ${hecha.mesa}` : 'Mostrador'} · {etiquetaPago(hecha)}
           </p>
 
           <p className="mt-6 text-4xl font-extrabold tabular-nums text-mocha">
@@ -720,7 +721,7 @@ async function guardarEnCurso() {
           total={cobrando.total}
           enviando={enviando}
           error={errorCobro}
-          onConfirmar={(metodo) => cobrarEnCurso(cobrando.comanda, metodo)}
+          onConfirmar={(pago) => cobrarEnCurso(cobrando.comanda, pago)}
           onCancelar={() => {
             setCobrando(null)
             setErrorCobro('')

@@ -2,14 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../useAuth'
 import { useTurno } from '../turno'
+import { etiquetaPago } from '../utils/pago'
 
 const dinero = (n) => `$${Math.round(n).toLocaleString('es-AR')}`
-
-const METODO = {
-  efectivo: 'Efectivo',
-  tarjeta: 'Tarjeta',
-  transferencia: 'Transferencia',
-}
 
 function urlComandasDeHoy() {
   const hoy = new Date()
@@ -363,7 +358,7 @@ export default function Home({ onNavigate = () => {}, onVerEnCurso = () => {} })
 
                     <div className="flex items-center gap-3">
                       <span className="rounded-full bg-latte/50 px-3 py-0.5 text-sm text-mocha">
-                        {METODO[c.metodo_pago] ?? c.metodo_pago}
+                        {etiquetaPago(c)}
                       </span>
                       <span className="text-xl font-bold tabular-nums">
                         {dinero(c.total)}

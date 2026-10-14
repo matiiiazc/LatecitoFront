@@ -11,7 +11,16 @@ const METODO = {
   transferencia: "Transferencia",
 };
 
-function textoTicket({ id, items, created_at, atendio, metodo_pago }) {
+function textoTicket({
+  id,
+  items,
+  created_at,
+  atendio,
+  metodo_pago,
+  pago_efectivo,
+  pago_transferencia,
+  pago_tarjeta,
+}) {
   const total = items.reduce((s, i) => s + i.subtotal, 0);
 
   const cuando = created_at ? new Date(created_at) : new Date();
@@ -26,6 +35,17 @@ function textoTicket({ id, items, created_at, atendio, metodo_pago }) {
     alineado(`${i.cantidad ?? 1}x ${i.nombre}`, dinero(i.subtotal))
   );
 
+  // Pago simple: una línea. Combinado: una línea por cada método usado.
+  const detallePago = [];
+  if (metodo_pago === "combinado") {
+    if (Number(pago_efectivo) > 0) detallePago.push(alineado("Efectivo", dinero(pago_efectivo)));
+    if (Number(pago_transferencia) > 0)
+      detallePago.push(alineado("Transferencia", dinero(pago_transferencia)));
+    if (Number(pago_tarjeta) > 0) detallePago.push(alineado("Tarjeta", dinero(pago_tarjeta)));
+  } else if (metodo_pago) {
+    detallePago.push(alineado("Pago", METODO[metodo_pago] ?? metodo_pago));
+  }
+
   return [
     "=".repeat(ANCHO),
     centrar("LATTECITO"),
@@ -36,9 +56,7 @@ function textoTicket({ id, items, created_at, atendio, metodo_pago }) {
     ...filas,
     "-".repeat(ANCHO),
     alineado("TOTAL", dinero(total)),
-    ...(metodo_pago
-      ? [alineado("Pago", METODO[metodo_pago] ?? metodo_pago)]
-      : []),
+    ...detallePago,
     "=".repeat(ANCHO),
     "",
     "",
