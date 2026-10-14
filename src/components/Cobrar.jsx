@@ -62,9 +62,13 @@ export default function Cobrar({ total, enviando, error, onConfirmar, onCancelar
         pago_efectivo: efectivo,
         pago_transferencia: transN || 0,
         pago_tarjeta: tarjetaN || 0,
+        pago_recibido: efectivo > 0 ? recibidoN : 0,
       })
     } else {
-      onConfirmar({ metodo_pago: metodo })
+      onConfirmar({
+        metodo_pago: metodo,
+        pago_recibido: metodo === 'efectivo' ? recibidoN : 0,
+      })
     }
   }
 
