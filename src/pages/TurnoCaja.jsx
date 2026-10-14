@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTurno } from '../turno'
+import { imprimirResumenTurno } from '../utils/imprimirTurno'
 
 // Pantalla del mostrador. Dos estados: no hay turno abierto y se elige perfil,
 // o hay turno abierto y se ve quién atiende y cuánto va.
@@ -264,6 +265,14 @@ function TurnoAbierto({ turno }) {
 
       <button
         type="button"
+        onClick={() => imprimirResumenTurno(turno)}
+        className="w-full rounded-2xl border border-linea bg-white px-6 py-4 text-base font-semibold text-mocha transition-colors hover:bg-latte/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+      >
+        Imprimir resumen del turno
+      </button>
+
+      <button
+        type="button"
         onClick={() => setCerrando(true)}
         className="w-full rounded-2xl bg-espresso px-6 py-5 text-xl font-bold text-latte shadow-lg shadow-espresso/20 transition-colors hover:bg-mocha focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
       >
@@ -373,7 +382,7 @@ function CerrarCaja({ turno, onCancelar }) {
       <div className="flex min-h-full items-end justify-center sm:items-center">
         <div className="w-full max-w-lg rounded-t-3xl bg-hueso pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl sm:rounded-3xl">
           {resumen ? (
-            <CierreResultado resumen={resumen} onListo={onCancelar} />
+            <CierreResultado resumen={resumen} turno={turno} onListo={onCancelar} />
           ) : (
             <>
               {/* Cabecera del panel */}
@@ -576,7 +585,7 @@ function CampoConteo({ id, etiqueta, valor, onChange, diferencia, autoFocus = fa
 }
 
 // El resultado queda como está, sin pedir explicación: ya está guardado
-function CierreResultado({ resumen, onListo }) {
+function CierreResultado({ resumen, turno, onListo }) {
   return (
     <div className="flex flex-col gap-5 px-5 py-8">
       <div className="text-center">
@@ -624,6 +633,14 @@ function CierreResultado({ resumen, onListo }) {
           <span className="font-semibold">Explicación:</span> {resumen.nota}
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={() => imprimirResumenTurno({ ...turno, ...resumen })}
+        className="w-full rounded-2xl border border-linea bg-white px-6 py-4 text-base font-semibold text-mocha transition-colors hover:bg-latte/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+      >
+        Imprimir resumen del turno
+      </button>
 
       <button
         type="button"
