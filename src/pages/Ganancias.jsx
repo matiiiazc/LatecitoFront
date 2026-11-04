@@ -44,6 +44,12 @@ export default function Ganancias() {
   const [gastos, setGastos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  const [mostrarProductos, setMostrarProductos] = useState(false)
+  const [categoriasProductos, setCategoriasProductos] = useState([])
+  const [productosVendidos, setProductosVendidos] = useState([])
+  const [categoriaProducto, setCategoriaProducto] = useState('')
+  const [cargandoProductos, setCargandoProductos] = useState(false)
+  const [errorProductos, setErrorProductos] = useState('')
 
   const [monto, setMonto] = useState('')
   const [categoria, setCategoria] = useState('luz')
@@ -78,6 +84,27 @@ export default function Ganancias() {
       vivo = false
     }
   }, [desde, hasta])
+
+  useEffect(() => {
+    if (!mostrarProductos) return
+    let vivo = true
+    setCargandoProductos(true)
+    setErrorProductos('')
+    const params = new URLSearchParams({ desde, hasta })
+    Promise.all([api('/productos/categorias'), api(`/gastos/productos-vendidos?${params}`)])
+      .then(([categorias, productos]) => {
+        if (!vivo) return
+        setCategoriasProductos(categorias)
+        setProductosVendidos(productos)
+      })
+      .catch((e) => {
+        if (vivo) setErrorProductos(e.message)
+      })
+      .finally(() => {
+        if (vivo) setCargandoProductos(false)
+      })
+    return () => { vivo = false }
+  }, [mostrarProductos, desde, hasta])
 
   function atajo(rango) {
     const anio = Number(hasta.slice(0, 4))
@@ -302,6 +329,56 @@ export default function Ganancias() {
           Imprimir resumen
         </button>
       </div>
+
+      <section className="mt-4 rounded-2xl border border-linea bg-white">
+        <button
+          type="button"
+          aria-expanded={mostrarProductos}
+          onClick={() => setMostrarProductos((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 p-4 text-left font-semibold text-mocha hover:bg-latte/20"
+        >
+          <span>Productos vendidos por categoría</span>
+          <span aria-hidden="true">{mostrarProductos ? '−' : '+'}</span>
+        </button>
+        {mostrarProductos && (
+          <div className="border-t border-linea p-4">
+            <label htmlFor="g-productos-cat" className="mb-1 block text-sm font-medium text-piedra">
+              Categoría de productos
+            </label>
+            <select
+              id="g-productos-cat"
+              value={categoriaProducto}
+              onChange={(e) => setCategoriaProducto(e.target.value)}
+              className={`${CAMPOS} sm:max-w-sm`}
+            >
+              <option value="">Todas las categorías</option>
+              {categoriasProductos.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+            {cargandoProductos && <p className="mt-4 text-piedra">Cargando productos vendidos...</p>}
+            {errorProductos && <p role="alert" className="mt-4 text-red-800">{errorProductos}</p>}
+            {!cargandoProductos && !errorProductos && (() => {
+              const lista = productosVendidos.filter((p) => !categoriaProducto || p.categoria_id === Number(categoriaProducto))
+              return lista.length === 0 ? (
+                <p className="mt-4 text-piedra">No se vendieron productos en esta categoría durante el período.</p>
+              ) : (
+                <ul className="mt-4 divide-y divide-linea rounded-xl border border-linea">
+                  {lista.map((p) => (
+                    <li key={`${p.id}-${p.categoria_id}`} className="flex items-center justify-between gap-4 p-3">
+                      <span className="min-w-0">
+                        <span className="block font-medium text-tinta">{p.nombre}</span>
+                        <span className="text-sm text-piedra">{p.categoria} · {p.cantidad} vendidos</span>
+                      </span>
+                      <span className="shrink-0 font-semibold tabular-nums text-mocha">{dinero(p.ingresos)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )
+            })()}
+          </div>
+        )}
+      </section>
 
       {error && (
         <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-red-800">
