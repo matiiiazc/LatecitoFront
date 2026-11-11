@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../useAuth'
 import { imprimirTexto, ANCHO, centrar, alineado } from '../utils/imprimir'
+import { lineasProductosVendidos } from '../utils/productosVendidos'
 
 const dinero = (n) => `$${Math.round(Number(n) || 0).toLocaleString('es-AR')}`
 
@@ -197,7 +198,7 @@ export default function Ganancias() {
   const maxGas = Math.max(1, ...(resumen?.dias ?? []).map((d) => d.gastos))
 
   // Arma el resumen como texto monoespaciado para la térmica
-  function imprimirResumen() {
+  async function imprimirResumen() {
     if (!resumen) return
     const sep = '='.repeat(ANCHO)
     const lin = '-'.repeat(ANCHO)
@@ -242,6 +243,15 @@ export default function Ganancias() {
         )
       }
     }
+
+    // Productos vendidos: se piden en el momento de imprimir para que salgan
+    // aunque la sección de la pantalla esté cerrada. Si la consulta falla, el
+    // resumen se imprime igual sin esta parte.
+    const productos = await api(
+      `/gastos/productos-vendidos?desde=${resumen.desde}&hasta=${resumen.hasta}`,
+    ).catch(() => [])
+
+    lineas.push(...lineasProductosVendidos(productos))
 
     const conMovimiento = resumen.dias.filter((d) => d.ingresos > 0 || d.gastos > 0)
     lineas.push(sep)

@@ -3,6 +3,8 @@
 // Sirve tanto para el turno en curso (sin el conteo) como para el cierre, que le
 // suma el efectivo y la transferencia contados y su diferencia.
 import { imprimirTexto, ANCHO, centrar, alineado } from './imprimir'
+import { lineasProductosVendidos } from './productosVendidos'
+import { api } from '../api'
 import { PAGO } from './pago'
 
 const ZONA = 'America/Argentina/Buenos_Aires'
@@ -43,7 +45,7 @@ function envolver(texto) {
 // Arma el resumen como texto monoespaciado para la térmica. Acepta el objeto del
 // turno en curso y, si viene del cierre, los campos del conteo (contado y
 // diferencia). No usa acentos: la térmica rompe los diacriticos.
-export function textoResumenTurno(t) {
+export function textoResumenTurno(t, productos = []) {
   const sep = '='.repeat(ANCHO)
   const lin = '-'.repeat(ANCHO)
   const lineas = []
@@ -88,6 +90,9 @@ export function textoResumenTurno(t) {
       lineas.push(alineado(`${PAGO[m.metodo] ?? m.metodo} (${m.cantidad})`, dinero(m.total)))
     }
   }
+
+  // Detalle de lo vendido: sirve para reponer y para controlar el turno
+  lineas.push(...lineasProductosVendidos(productos))
 
   // Gaveta: la base mas lo cobrado en efectivo. Si vino del cierre, lo contado
   const esperado =
@@ -146,6 +151,12 @@ export function textoResumenTurno(t) {
   return lineas.join('\n')
 }
 
-export function imprimirResumenTurno(t) {
-  imprimirTexto(textoResumenTurno(t))
+export async function imprimirResumenTurno(t) {
+  // Los productos del turno se piden al imprimir: así el ticket sale completo
+  // aunque la pantalla no los tenga cargados. Si falla, se imprime sin ellos.
+  let productos = []
+  if (t?.id) {
+    productos = await api(`/turnos/${t.id}/productos-vendidos`).catch(() => [])
+  }
+  imprimirTexto(textoResumenTurno(t, productos))
 }

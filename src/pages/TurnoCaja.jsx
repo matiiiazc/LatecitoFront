@@ -199,9 +199,9 @@ function TurnoAbierto({ turno }) {
     setImprimiendo(true)
     try {
       const fresco = await traer()
-      imprimirResumenTurno(fresco ?? turno)
+      await imprimirResumenTurno(fresco ?? turno)
     } catch {
-      imprimirResumenTurno(turno)
+      await imprimirResumenTurno(turno)
     } finally {
       setImprimiendo(false)
     }
