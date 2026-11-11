@@ -15,10 +15,18 @@ export const useTurno = create((set, get) => ({
   cargando: true,
   cargado: false,
 
+  // Pide el turno al servidor y lo deja en el store. Devuelve el turno para
+  // poder imprimir siempre con datos frescos, aunque la pantalla tenga rato
+  // abierta o se haya vendido desde otro lado.
+  async traer() {
+    const { turno } = await api('/turnos/actual')
+    set({ turno, cargando: false, cargado: true })
+    return turno
+  },
+
   async cargar() {
     try {
-      const { turno } = await api('/turnos/actual')
-      set({ turno, cargando: false, cargado: true })
+      await get().traer()
     } catch {
       // Si el server no responde, no se pisa lo que ya se estaba mostrando
       set({ cargando: false, cargado: true })
@@ -52,7 +60,9 @@ export const useTurno = create((set, get) => ({
         nota,
       },
     })
-    set({ turno: null })
+    // Ojo: no se limpia el turno acá. La pantalla muestra el resultado del
+    // cierre (con el botón para imprimir el resumen) hasta que el usuario
+    // vuelve a la caja; si se limpiara, el resultado desaparecía al instante.
     return r
   },
 }))

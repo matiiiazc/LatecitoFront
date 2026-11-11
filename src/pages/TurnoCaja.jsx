@@ -182,12 +182,30 @@ function AbrirTurno({ perfiles, cargando }) {
 // que la persona hace al final del día: cerrar y contar la caja.
 function TurnoAbierto({ turno }) {
   const [cerrando, setCerrando] = useState(false)
+  const [imprimiendo, setImprimiendo] = useState(false)
+  const traer = useTurno((s) => s.traer)
 
   const efectivo = turno.por_metodo.find((m) => m.metodo === 'efectivo')
   const transferencia = turno.por_metodo.find((m) => m.metodo === 'transferencia')
   const otros = turno.por_metodo.filter(
     (m) => m.metodo !== 'efectivo' && m.metodo !== 'transferencia',
   )
+
+  // La pantalla puede tener rato abierta: antes de imprimir se le pide el turno
+  // al servidor, así el resumen sale con lo vendido hasta este momento y no con
+  // los totales viejos que quedaron en memoria (parecía que no se había vendido
+  // nada). Si falla la consulta, se imprime lo que ya se tiene en pantalla.
+  async function imprimir() {
+    setImprimiendo(true)
+    try {
+      const fresco = await traer()
+      imprimirResumenTurno(fresco ?? turno)
+    } catch {
+      imprimirResumenTurno(turno)
+    } finally {
+      setImprimiendo(false)
+    }
+  }
 
   return (
     <div className={PAGINA}>
@@ -265,10 +283,11 @@ function TurnoAbierto({ turno }) {
 
       <button
         type="button"
-        onClick={() => imprimirResumenTurno(turno)}
-        className="w-full rounded-2xl border border-linea bg-white px-6 py-4 text-base font-semibold text-mocha transition-colors hover:bg-latte/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha"
+        onClick={imprimir}
+        disabled={imprimiendo}
+        className="w-full rounded-2xl border border-linea bg-white px-6 py-4 text-base font-semibold text-mocha transition-colors hover:bg-latte/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mocha disabled:opacity-60"
       >
-        Imprimir resumen del turno
+        {imprimiendo ? 'Buscando lo vendido...' : 'Imprimir resumen del turno'}
       </button>
 
       <button
@@ -321,7 +340,7 @@ function EnTurnoDesde({ abiertoAt }) {
 // después se carga lo que se contó y por último se confirma. Solo quien abrió
 // el turno puede cerrarlo, así que no hay selector de persona.
 function CerrarCaja({ turno, onCancelar }) {
-  const { cerrar } = useTurno()
+  const { cerrar, cargar } = useTurno()
   const [contado, setContado] = useState('')
   const [contadoTrans, setContadoTrans] = useState('')
   const [nota, setNota] = useState('')
@@ -382,7 +401,16 @@ function CerrarCaja({ turno, onCancelar }) {
       <div className="flex min-h-full items-end justify-center sm:items-center">
         <div className="w-full max-w-lg rounded-t-3xl bg-hueso pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl sm:rounded-3xl">
           {resumen ? (
-            <CierreResultado resumen={resumen} turno={turno} onListo={onCancelar} />
+            <CierreResultado
+              resumen={resumen}
+              turno={turno}
+              onListo={() => {
+                onCancelar()
+                // El turno guardado ya quedó cerrado: al volver a la caja se
+                // pide de nuevo para que muestre la pantalla de apertura.
+                cargar()
+              }}
+            />
           ) : (
             <>
               {/* Cabecera del panel */}

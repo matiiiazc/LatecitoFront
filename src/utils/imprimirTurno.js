@@ -9,7 +9,9 @@ const ZONA = 'America/Argentina/Buenos_Aires'
 const ar = (opciones) => new Intl.DateTimeFormat('es-AR', { timeZone: ZONA, ...opciones })
 
 const fechaHora = (valor) => {
+  if (valor == null || valor === '') return null
   const d = valor instanceof Date ? valor : new Date(valor)
+  if (Number.isNaN(d.getTime())) return null
   return {
     fecha: ar({ day: '2-digit', month: '2-digit', year: 'numeric' }).format(d),
     hora: ar({ hour: '2-digit', minute: '2-digit', hour12: false }).format(d),
@@ -60,8 +62,8 @@ export function textoResumenTurno(t) {
   lineas.push(centrar('LATTECITO'))
   lineas.push(centrar(cerrado ? 'CIERRE DE TURNO' : 'RESUMEN DE TURNO'))
   lineas.push(sep)
-  lineas.push(`Atendio: ${t.usuario}`)
-  lineas.push(`Abrio:   ${abierto.fecha} ${abierto.hora}`)
+  lineas.push(`Atendio: ${t.usuario ?? '-'}`)
+  lineas.push(`Abrio:   ${abierto ? `${abierto.fecha} ${abierto.hora}` : '-'}`)
   if (cerrado) {
     lineas.push(`Cerro:   ${cerrado.fecha} ${cerrado.hora}`)
   } else {

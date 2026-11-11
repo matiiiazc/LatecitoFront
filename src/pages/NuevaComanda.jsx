@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
 import Cobrar from '../components/Cobrar'
+import { useTurno } from '../turno'
 import { imprimirTicket } from '../utils/imprimirTicket'
 import { etiquetaPago } from '../utils/pago'
 
@@ -204,6 +205,9 @@ async function guardarEnCurso() {
       setCobrando(null)
       setHecha(cobrada)
       await cargarAbiertas()
+      // La caja del día muestra lo vendido: se refresca apenas se cobra, así
+      // el resumen del turno no sale con los totales de antes.
+      useTurno.getState().cargar()
     } catch (e) {
       setErrorCobro(e.message)
     } finally {
@@ -222,6 +226,8 @@ async function guardarEnCurso() {
       setAnulando(null)
       setMotivo('')
       await cargarAbiertas()
+      // Anular una comanda cobrada baja lo vendido del turno
+      useTurno.getState().cargar()
     } catch (e) {
       setErrorAnular(e.message)
     } finally {
