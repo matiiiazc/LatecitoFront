@@ -71,17 +71,17 @@ export function imprimirTexto(texto) {
   const iframe = document.createElement("iframe");
   iframe.style.cssText =
     "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
-  document.body.appendChild(iframe);
 
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-
-  // Esperar a que cargue el contenido antes de imprimir
+  // El handler se asigna ANTES de cargar el contenido. Si se asigna después de
+  // doc.write()/doc.close(), el evento load ya se disparó y print() nunca corre:
+  // el resumen (o el ticket) no sale. Con srcdoc el load llega una sola vez,
+  // cuando el contenido ya está escrito.
   iframe.onload = () => {
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
     setTimeout(() => iframe.remove(), 1000);
   };
+
+  iframe.srcdoc = html;
+  document.body.appendChild(iframe);
 }
