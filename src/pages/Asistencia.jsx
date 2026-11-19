@@ -14,6 +14,8 @@ const enCa = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(
 const minutosTexto = (n) =>
   `${Math.round(Number(n) || 0).toLocaleString('es-AR')} min`
 
+const motivoTexto = (m) => (m === 'largo' ? 'cierre olvidado' : 'apertura accidental')
+
 // La API nueva manda minutos; si todavía responde la vieja, se calculan
 const minutosDe = (e) => (e.minutos != null ? e.minutos : Math.round((e.horas ?? 0) * 60))
 const pesos = (n) =>
@@ -241,8 +243,11 @@ function Minutos() {
 
           {datos.minimo_minutos > 0 && (
             <p className="mb-3 text-xs text-piedra">
-              Los turnos de menos de {datos.minimo_minutos} minutos no se cuentan: son aperturas
-              accidentales.
+              No se cuentan los turnos de menos de {datos.minimo_minutos} minutos
+              {datos.maximo_minutos
+                ? ` ni los de más de ${Math.round(datos.maximo_minutos / 60)} horas (cierre olvidado)`
+                : ''}
+              .
             </p>
           )}
 
@@ -280,6 +285,16 @@ function Minutos() {
                         <li key={i} className="tabular-nums">
                           {diaHora(t.entrada)} → {t.salida ? diaHora(t.salida) : 'sin cerrar'}
                           <span className="ml-2 text-tinta">{minutosTexto(t.minutos)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {(emp.descartados ?? []).length > 0 && (
+                    <ul className="mt-2 flex flex-col gap-1 text-xs text-amber-900">
+                      {emp.descartados.map((d) => (
+                        <li key={d.id} className="tabular-nums">
+                          {diaHora(d.abierto_at)} · {minutosTexto(d.minutos)} ·{' '}
+                          {motivoTexto(d.motivo)} (no contado)
                         </li>
                       ))}
                     </ul>

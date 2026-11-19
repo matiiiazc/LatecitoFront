@@ -16,6 +16,17 @@ const pesos = (n) =>
 
 const minutosTexto = (n) => `${Math.round(Number(n) || 0).toLocaleString('es-AR')} min`
 
+const motivoTexto = (m) => (m === 'largo' ? 'cierre olvidado' : 'apertura accidental')
+
+const diaHora = (iso) =>
+  new Intl.DateTimeFormat('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso))
+
 // La API nueva manda minutos; si todavía responde la vieja, se calculan
 const minutosDe = (e) => (e.minutos != null ? e.minutos : Math.round((e.horas ?? 0) * 60))
 
@@ -38,6 +49,7 @@ export default function Horas() {
   const [precio, setPrecio] = useState('')
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [reglas, setReglas] = useState({ minimo: 5, maximo: 720 })
 
   useEffect(() => {
     let vivo = true
@@ -47,6 +59,9 @@ export default function Horas() {
         if (!vivo) return
         setEmpleados(d.empleados)
         setSeleccion(d.empleados.map((e) => e.id))
+        if (d.minimo_minutos != null && d.maximo_minutos != null) {
+          setReglas({ minimo: d.minimo_minutos, maximo: d.maximo_minutos })
+        }
       } catch (e) {
         if (vivo) setError(e.message)
       } finally {
@@ -109,7 +124,8 @@ export default function Horas() {
         <h2 className="text-xl font-extrabold text-espresso">Cotizar minutos de trabajo</h2>
         <p className="mt-1 text-sm text-piedra">
           Los minutos se suman desde que se abre la caja hasta que se cierra, y se pagan por minuto
-          trabajado. Los turnos de menos de 5 minutos no cuentan.
+          trabajado. No cuentan los turnos de menos de {reglas.minimo} minutos ni los de más de{' '}
+          {Math.round(reglas.maximo / 60)} horas (cierre olvidado).
         </p>
 
         <div className="mt-4">
@@ -170,6 +186,22 @@ export default function Horas() {
             <p className="text-sm text-piedra">Todavía no hay ningún turno cerrado.</p>
           )}
         </div>
+
+        {empleados.some((e) => (e.descartados ?? []).length > 0) && (
+          <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-900">
+            <p className="font-semibold">Turnos no contados</p>
+            <ul className="mt-1 flex flex-col gap-1">
+              {empleados.flatMap((e) =>
+                (e.descartados ?? []).map((d) => (
+                  <li key={`${e.id}-${d.id}`}>
+                    {e.nombre} · {d.abierto_at ? diaHora(d.abierto_at) : d.fecha} ·{' '}
+                    {minutosTexto(d.minutos)} · {motivoTexto(d.motivo)}
+                  </li>
+                )),
+              )}
+            </ul>
+          </div>
+        )}
       </div>
 
       {elegidos.length > 0 && (
