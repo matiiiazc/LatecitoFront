@@ -49,7 +49,7 @@ export default function Horas() {
   const [precio, setPrecio] = useState('')
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(true)
-  const [reglas, setReglas] = useState({ minimo: 5, maximo: 720 })
+  const [reglas, setReglas] = useState({ minimo: 5, maximo: 540 })
 
   useEffect(() => {
     let vivo = true
