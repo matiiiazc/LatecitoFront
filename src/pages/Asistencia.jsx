@@ -2,17 +2,20 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../useAuth'
 
-// Lo que el admin necesita ver: los turnos de caja y las horas de cada empleado.
-// Las horas se sacan de los turnos de caja, no de un fichaje aparte, así que
-// abrir y cerrar caja ya es marcar la entrada y la salida.
+// Lo que el admin necesita ver: los turnos de caja y los minutos de cada
+// empleado. Los minutos se sacan de los turnos de caja, no de un fichaje
+// aparte, así que abrir y cerrar caja ya es marcar la entrada y la salida.
 
 const ZONA = 'America/Argentina/Buenos_Aires'
 const ar = (opciones) => new Intl.DateTimeFormat('es-AR', { timeZone: ZONA, ...opciones })
 const diaHora = (iso) =>
   ar({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 const enCa = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(d)
-const horasTexto = (n) =>
-  `${(Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })} h`
+const minutosTexto = (n) =>
+  `${Math.round(Number(n) || 0).toLocaleString('es-AR')} min`
+
+// La API nueva manda minutos; si todavía responde la vieja, se calculan
+const minutosDe = (e) => (e.minutos != null ? e.minutos : Math.round((e.horas ?? 0) * 60))
 const pesos = (n) =>
   '$' + (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })
 
@@ -45,7 +48,7 @@ export default function Asistencia() {
       <div className="mb-5 flex gap-1 rounded-xl bg-latte/40 p-1">
         {[
           { id: 'historial', etiqueta: 'Turnos' },
-          { id: 'horas', etiqueta: 'Horas' },
+          { id: 'minutos', etiqueta: 'Minutos' },
         ].map((t) => (
           <button
             key={t.id}
@@ -62,7 +65,7 @@ export default function Asistencia() {
       </div>
 
       {tab === 'historial' && <Historial />}
-      {tab === 'horas' && <Horas />}
+      {tab === 'minutos' && <Minutos />}
     </div>
   )
 }
@@ -158,9 +161,9 @@ function Historial() {
   )
 }
 
-// --- Horas por empleado ---
+// --- Minutos por empleado ---
 
-function Horas() {
+function Minutos() {
   const [periodo, setPeriodo] = useState(() => {
     const hoy = enCa(new Date())
     return { desde: `${hoy.slice(0, 7)}-01`, hasta: hoy }
@@ -225,9 +228,23 @@ function Horas() {
       {datos && (
         <div className={TARJETA}>
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="font-semibold text-espresso">Horas por empleado</h2>
-            <p className="text-sm text-piedra">Total: {horasTexto(datos.total_horas)}</p>
+            <h2 className="font-semibold text-espresso">Minutos por empleado</h2>
+            <p className="text-sm text-piedra">
+              Total:{' '}
+              {minutosTexto(
+                datos.total_minutos != null
+                  ? datos.total_minutos
+                  : Math.round((datos.total_horas ?? 0) * 60),
+              )}
+            </p>
           </div>
+
+          {datos.minimo_minutos > 0 && (
+            <p className="mb-3 text-xs text-piedra">
+              Los turnos de menos de {datos.minimo_minutos} minutos no se cuentan: son aperturas
+              accidentales.
+            </p>
+          )}
 
           {cargando ? (
             <p className="text-sm text-piedra">Cargando...</p>
@@ -246,16 +263,23 @@ function Horas() {
                         </span>
                       )}
                     </p>
-                    <p className="font-semibold tabular-nums text-espresso">{horasTexto(emp.horas)}</p>
+                    <p className="font-semibold tabular-nums text-espresso">
+                      {minutosTexto(minutosDe(emp))}
+                    </p>
                   </div>
                   <p className="text-xs text-piedra">
                     {emp.dias} {emp.dias === 1 ? 'día trabajado' : 'días trabajados'}
+                    {emp.ignorados > 0 &&
+                      ` · ${emp.ignorados} ${
+                        emp.ignorados === 1 ? 'turno descartado' : 'turnos descartados'
+                      }`}
                   </p>
                   {emp.tramos.length > 0 && (
                     <ul className="mt-2 flex flex-col gap-1 text-xs text-piedra">
                       {emp.tramos.map((t, i) => (
                         <li key={i} className="tabular-nums">
                           {diaHora(t.entrada)} → {t.salida ? diaHora(t.salida) : 'sin cerrar'}
+                          <span className="ml-2 text-tinta">{minutosTexto(t.minutos)}</span>
                         </li>
                       ))}
                     </ul>

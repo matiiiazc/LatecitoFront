@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { imprimirTexto, ANCHO, centrar, alineado } from '../utils/imprimir'
 
-// Cotización de horas de trabajo. Las horas salen de los turnos de caja ya
-// cerrados (de abrir a cerrar) y cada turno se redondea SIEMPRE para arriba a
-// la hora completa: cuatro horas y media se pagan como cinco, nunca a medias.
-// El precio de la hora se tipea a mano porque cambia según el día.
+// Cotización de minutos de trabajo. Los minutos salen de los turnos de caja ya
+// cerrados (de abrir a cerrar) y se pagan por minuto trabajado. Los turnos de
+// menos de 5 minutos no cuentan: son aperturas y cierres accidentales.
+// El precio del minuto se tipea a mano porque cambia según el día.
 
 const TARJETA = 'rounded-2xl border border-linea bg-white p-5'
 const CAMPOS =
@@ -13,6 +13,11 @@ const CAMPOS =
 
 const pesos = (n) =>
   '$' + (Number(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+
+const minutosTexto = (n) => `${Math.round(Number(n) || 0).toLocaleString('es-AR')} min`
+
+// La API nueva manda minutos; si todavía responde la vieja, se calculan
+const minutosDe = (e) => (e.minutos != null ? e.minutos : Math.round((e.horas ?? 0) * 60))
 
 // Igual que en la caja: en Argentina se escribe 20.000 o 20,5 y Number() no entiende eso
 function aNumero(txt) {
@@ -54,10 +59,10 @@ export default function Horas() {
   }, [])
 
   const elegidos = empleados.filter((e) => seleccion.includes(e.id))
-  const horasTotales = elegidos.reduce((n, e) => n + e.horas, 0)
+  const minutosTotales = elegidos.reduce((n, e) => n + minutosDe(e), 0)
   const precioNum = aNumero(precio)
   const precioValido = precio.trim() !== '' && Number.isFinite(precioNum) && precioNum >= 0
-  const total = precioValido ? horasTotales * precioNum : null
+  const total = precioValido ? minutosTotales * precioNum : null
 
   function alternar(id) {
     setSeleccion((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]))
@@ -71,7 +76,7 @@ export default function Horas() {
 
     lineas.push(sep)
     lineas.push(centrar('LATTECITO'))
-    lineas.push(centrar('HORAS DE TRABAJO'))
+    lineas.push(centrar('MINUTOS DE TRABAJO'))
     lineas.push(sep)
     lineas.push(alineado('Fecha', new Date().toLocaleDateString('es-AR')))
     lineas.push(lin)
@@ -79,14 +84,15 @@ export default function Horas() {
       lineas.push('Sin empleados seleccionados')
     } else {
       for (const e of elegidos) {
-        const detalle = precioValido ? `${e.horas} h x ${pesos(precioNum)}` : `${e.horas} h`
-        const monto = precioValido ? pesos(e.horas * precioNum) : ''
+        const mins = minutosDe(e)
+        const detalle = precioValido ? `${mins} min x ${pesos(precioNum)}` : `${mins} min`
+        const monto = precioValido ? pesos(mins * precioNum) : ''
         lineas.push(alineado(`${e.nombre}  ${detalle}`, monto))
       }
     }
     lineas.push(lin)
     lineas.push(
-      alineado(`TOTAL ${horasTotales} h`, precioValido ? pesos(total) : '(sin precio)')
+      alineado(`TOTAL ${minutosTotales} min`, precioValido ? pesos(total) : '(sin precio)')
     )
     lineas.push(sep)
     lineas.push('')
@@ -100,22 +106,22 @@ export default function Horas() {
   return (
     <div className="flex flex-col gap-4">
       <div className={TARJETA}>
-        <h2 className="text-xl font-extrabold text-espresso">Cotizar horas de trabajo</h2>
+        <h2 className="text-xl font-extrabold text-espresso">Cotizar minutos de trabajo</h2>
         <p className="mt-1 text-sm text-piedra">
-          Las horas se suman desde que se abre la caja hasta que se cierra, y cada turno se paga
-          como hora completa: nunca a medias.
+          Los minutos se suman desde que se abre la caja hasta que se cierra, y se pagan por minuto
+          trabajado. Los turnos de menos de 5 minutos no cuentan.
         </p>
 
         <div className="mt-4">
-          <label htmlFor="precio-hora" className="mb-1 block text-sm font-medium text-piedra">
-            Precio de la hora
+          <label htmlFor="precio-minuto" className="mb-1 block text-sm font-medium text-piedra">
+            Precio del minuto
           </label>
           <div className="relative">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-piedra">
               $
             </span>
             <input
-              id="precio-hora"
+              id="precio-minuto"
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
               inputMode="decimal"
@@ -149,7 +155,14 @@ export default function Horas() {
                 <span className="font-semibold text-tinta">{e.nombre}</span>
               </span>
               <span className="tabular-nums text-piedra">
-                {e.horas} h <span className="text-xs">({e.turnos.length} turnos)</span>
+                {minutosTexto(minutosDe(e))}{' '}
+                <span className="text-xs">
+                  ({e.turnos.length} turnos
+                  {e.ignorados
+                    ? `, ${e.ignorados} ${e.ignorados === 1 ? 'descartado' : 'descartados'}`
+                    : ''}
+                  )
+                </span>
               </span>
             </label>
           ))}
@@ -167,10 +180,12 @@ export default function Horas() {
               <li key={e.id} className="flex justify-between">
                 <span className="text-tinta">{e.nombre}</span>
                 <span className="tabular-nums text-tinta">
-                  {e.horas} h
+                  {minutosTexto(minutosDe(e))}
                   {precioValido && <span className="text-piedra"> × {pesos(precioNum)}</span>}
                   {precioValido && (
-                    <span className="ml-2 font-semibold">{pesos(e.horas * precioNum)}</span>
+                    <span className="ml-2 font-semibold">
+                      {pesos(minutosDe(e) * precioNum)}
+                    </span>
                   )}
                 </span>
               </li>
@@ -179,7 +194,7 @@ export default function Horas() {
           <div className="mt-3 flex justify-between border-t border-linea pt-3 text-base font-bold">
             <span className="text-espresso">Total a abonar</span>
             <span className="tabular-nums text-espresso">
-              {horasTotales} h{' '}
+              {minutosTexto(minutosTotales)}{' '}
               {precioValido ? (
                 <span className="ml-2">{pesos(total)}</span>
               ) : (
